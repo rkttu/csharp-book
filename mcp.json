@@ -1,0 +1,22 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp.json",
+  "mcpServers": {
+    "microsoft-learn": {
+      "url": "https://learn.microsoft.com/api/mcp",
+      "description": "Microsoft Learn MCP 서버 - C# 및 .NET 공식 문서 접근",
+      "metadata": {
+        "name": "Microsoft Learn",
+        "version": "1.0.0",
+        "provider": "Microsoft"
+      },
+      "capabilities": [
+        "documentation",
+        "code-samples",
+        "api-reference",
+        "tutorials"
+      ]
+    }
+  },
+  "description": "C# 프로그래밍 실습 책 작성을 위한 MCP 서버 설정",
+  "version": "1.0.0"
+}
