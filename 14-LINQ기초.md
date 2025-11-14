@@ -1514,7 +1514,49 @@ foreach (var item in sorted)
 
 ### 14.4.1 Count, Sum, Average
 
+집계 연산자(Aggregation Operators)는 컬렉션 전체를 하나의 값으로 축약(Reduce)하는 연산자들입니다. 이들은 함수형 프로그래밍의 **reduce** 또는 **fold** 패턴을 구현하며, 통계 분석과 데이터 요약에 필수적입니다. 중요한 점은 이들이 **즉시 실행(Immediate Execution)** 연산자라는 것입니다. 즉, 호출 즉시 전체 컬렉션을 순회하여 결과를 반환합니다.
+
+**즉시 실행의 의미:**
+
+`Where`, `Select`, `OrderBy`와 달리, 집계 연산자는 지연 실행되지 않습니다. 메서드 호출 시점에 즉시 모든 요소를 평가하고 최종 값을 반환합니다. 이는 집계 연산의 본질상 전체 데이터를 봐야만 결과를 계산할 수 있기 때문입니다.
+
+```csharp
+var numbers = new List<int> { 1, 2, 3, 4, 5 };
+var query = numbers.Where(n => n > 2);  // 지연 실행: 아직 실행 안 됨
+int count = query.Count();  // 즉시 실행: 여기서 Where와 Count가 함께 실행됨
+```
+
 **Count - 요소 개수 세기:**
+
+`Count`는 시퀀스의 요소 개수를 반환합니다. 단순해 보이지만, 내부적으로는 최적화가 이루어집니다.
+
+```csharp
+// 시그니처
+public static int Count<TSource>(this IEnumerable<TSource> source)
+public static int Count<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
+```
+
+**Count의 내부 최적화:**
+
+`Count`는 입력 타입에 따라 다르게 동작합니다:
+
+- `ICollection<T>`를 구현한 경우: `Count` 속성 직접 반환 (O(1))
+- 그 외의 경우: 전체 열거하여 개수 세기 (O(n))
+
+```csharp
+List<int> list = new List<int> { 1, 2, 3, 4, 5 };
+int count1 = list.Count();  // O(1) - List.Count 속성 사용
+
+IEnumerable<int> sequence = list.Where(n => n > 2);
+int count2 = sequence.Count();  // O(n) - 전체 열거 필요
+
+// 최적화 비교
+var largeList = Enumerable.Range(1, 10000000).ToList();
+// list.Count() → 즉시 반환 (Count 속성)
+// list.Where(...).Count() → 전체 필터링 후 계산
+```
+
+**기본 예제:**
 
 ```csharp
 List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -1524,7 +1566,7 @@ int totalCount = numbers.Count();
 Console.WriteLine($"전체 개수: {totalCount}");
 // 출력: 전체 개수: 10
 
-// 조건을 만족하는 요소 개수
+// 조건을 만족하는 요소 개수 (술어 포함 오버로드)
 int evenCount = numbers.Count(n => n % 2 == 0);
 Console.WriteLine($"짝수 개수: {evenCount}");
 // 출력: 짝수 개수: 5
@@ -1532,20 +1574,220 @@ Console.WriteLine($"짝수 개수: {evenCount}");
 int greaterThanFive = numbers.Count(n => n > 5);
 Console.WriteLine($"5보다 큰 수 개수: {greaterThanFive}");
 // 출력: 5보다 큰 수 개수: 5
+
+// Any와 Count의 차이
+bool hasEven = numbers.Any(n => n % 2 == 0);  // 하나라도 있으면 즉시 true 반환 (효율적)
+int evenCount2 = numbers.Count(n => n % 2 == 0);  // 모든 요소 검사 후 개수 반환
+```
+
+**LongCount - 큰 컬렉션:**
+
+`Count`는 `int`를 반환하므로 약 21억 개가 한계입니다. 더 큰 컬렉션에는 `LongCount`를 사용합니다.
+
+```csharp
+// int 범위: -2,147,483,648 ~ 2,147,483,647 (약 21억)
+// long 범위: -9,223,372,036,854,775,808 ~ 9,223,372,036,854,775,807 (약 900경)
+
+long hugeCount = Enumerable.Range(1, int.MaxValue / 2).LongCount();
+Console.WriteLine($"큰 컬렉션 개수: {hugeCount:N0}");
+// 출력: 큰 컬렉션 개수: 1,073,741,823
 ```
 
 **Sum - 합계 계산:**
 
+`Sum`은 숫자 시퀀스의 합계를 계산합니다. 여러 숫자 타입에 대한 오버로드가 제공됩니다.
+
 ```csharp
+// 시그니처 (int 버전, 다른 숫자 타입도 유사)
+public static int Sum(this IEnumerable<int> source)
+public static int Sum<TSource>(this IEnumerable<TSource> source, Func<TSource, int> selector)
+```
+
+**Sum의 오버플로 주의:**
+
+`Sum`은 오버플로를 검사하지 않으므로, 큰 수의 합계 시 주의가 필요합니다.
+
+```csharp
+List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
 // 전체 합계
 int sum = numbers.Sum();
 Console.WriteLine($"전체 합계: {sum}");
 // 출력: 전체 합계: 55
 
-// 조건을 만족하는 요소의 합계
+// 조건부 합계
 int evenSum = numbers.Where(n => n % 2 == 0).Sum();
 Console.WriteLine($"짝수 합계: {evenSum}");
 // 출력: 짝수 합계: 30
+
+// 오버플로 예제
+var largeNumbers = Enumerable.Repeat(int.MaxValue / 2, 10);
+try
+{
+    int overflow = largeNumbers.Sum();  // 오버플로 발생!
+    Console.WriteLine($"합계: {overflow}");
+}
+catch (OverflowException)
+{
+    Console.WriteLine("오버플로 발생!");
+}
+
+// 해결: long 사용
+long safeSum = largeNumbers.Select(n => (long)n).Sum();
+Console.WriteLine($"안전한 합계: {safeSum:N0}");
+```
+
+**Average - 평균 계산:**
+
+`Average`는 숫자 시퀀스의 산술 평균을 계산합니다. 반환 타입은 항상 `double` 또는 `decimal`입니다.
+
+```csharp
+// 시그니처
+public static double Average(this IEnumerable<int> source)
+public static double Average<TSource>(this IEnumerable<TSource> source, Func<TSource, int> selector)
+```
+
+**Average의 주의사항:**
+
+1. 빈 시퀀스에 대해 `Average`를 호출하면 `InvalidOperationException` 발생
+2. 반환 타입이 `double`이므로 부동소수점 정밀도 문제 가능
+
+```csharp
+// 전체 평균
+double average = numbers.Average();
+Console.WriteLine($"전체 평균: {average}");
+// 출력: 전체 평균: 5.5
+
+// 조건부 평균
+double oddAverage = numbers.Where(n => n % 2 != 0).Average();
+Console.WriteLine($"홀수 평균: {oddAverage}");
+// 출력: 홀수 평균: 5
+
+// 빈 시퀀스 처리
+var empty = new List<int>();
+try
+{
+    double emptyAvg = empty.Average();  // 예외!
+}
+catch (InvalidOperationException)
+{
+    Console.WriteLine("빈 컬렉션의 평균을 계산할 수 없습니다.");
+}
+
+// 안전한 패턴
+double safeAverage = empty.Any() ? empty.Average() : 0;
+// 또는 DefaultIfEmpty 사용
+double safeAverage2 = empty.DefaultIfEmpty().Average();  // 0 반환
+```
+
+**객체 컬렉션에서의 집계:**
+
+실무에서는 객체의 특정 속성을 집계하는 경우가 많습니다.
+
+```csharp
+class Product
+{
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+    public int Quantity { get; set; }
+    public string Category { get; set; }
+}
+
+List<Product> products = new List<Product>
+{
+    new Product { Name = "노트북", Price = 1500000, Quantity = 3, Category = "전자제품" },
+    new Product { Name = "마우스", Price = 35000, Quantity = 10, Category = "전자제품" },
+    new Product { Name = "키보드", Price = 120000, Quantity = 5, Category = "전자제품" },
+    new Product { Name = "책상", Price = 300000, Quantity = 2, Category = "가구" }
+};
+
+// 상품 종류 개수
+int productCount = products.Count();
+Console.WriteLine($"총 상품 종류: {productCount}");
+// 출력: 총 상품 종류: 4
+
+// 카테고리별 개수
+int electronicsCount = products.Count(p => p.Category == "전자제품");
+Console.WriteLine($"전자제품: {electronicsCount}개");
+// 출력: 전자제품: 3개
+
+// 총 재고 수량
+int totalQuantity = products.Sum(p => p.Quantity);
+Console.WriteLine($"총 재고: {totalQuantity}개");
+// 출력: 총 재고: 20개
+
+// 평균 가격
+decimal avgPrice = products.Average(p => p.Price);
+Console.WriteLine($"평균 가격: {avgPrice:C0}");
+// 출력: 평균 가격: ₩488,750
+
+// 총 재고 가치 (가격 × 수량의 합)
+decimal totalValue = products.Sum(p => p.Price * p.Quantity);
+Console.WriteLine($"총 재고 가치: {totalValue:C0}");
+// 출력: 총 재고 가치: ₩5,450,000
+
+// 전자제품 평균 가격
+decimal electronicsAvgPrice = products
+    .Where(p => p.Category == "전자제품")
+    .Average(p => p.Price);
+Console.WriteLine($"전자제품 평균 가격: {electronicsAvgPrice:C0}");
+// 출력: 전자제품 평균 가격: ₩551,667
+```
+
+**실무 패턴 - 통계 한 번에 계산:**
+
+여러 통계를 계산할 때 매번 컬렉션을 순회하는 것은 비효율적입니다.
+
+```csharp
+// 비효율적: 4번 순회
+int count = products.Count();
+int sumQuantity = products.Sum(p => p.Quantity);
+decimal avgPrice = products.Average(p => p.Price);
+decimal maxPrice = products.Max(p => p.Price);
+
+// 효율적: 1번 순회로 모든 통계 계산 (Aggregate 활용)
+var stats = products.Aggregate(
+    new { Count = 0, TotalQty = 0, SumPrice = 0m, MaxPrice = 0m },
+    (acc, p) => new
+    {
+        Count = acc.Count + 1,
+        TotalQty = acc.TotalQty + p.Quantity,
+        SumPrice = acc.SumPrice + p.Price,
+        MaxPrice = Math.Max(acc.MaxPrice, p.Price)
+    },
+    acc => new
+    {
+        acc.Count,
+        acc.TotalQty,
+        AveragePrice = acc.Count > 0 ? acc.SumPrice / acc.Count : 0,
+        acc.MaxPrice
+    }
+);
+
+Console.WriteLine($"제품 수: {stats.Count}, 총 재고: {stats.TotalQty}");
+Console.WriteLine($"평균 가격: {stats.AveragePrice:C0}, 최고가: {stats.MaxPrice:C0}");
+```
+
+**성능 고려사항:**
+
+1. **Where().Count() vs Count(predicate)**: 후자가 약간 더 효율적
+
+```csharp
+// 덜 효율적
+int count1 = numbers.Where(n => n > 5).Count();  // 중간 시퀀스 생성
+
+// 더 효율적
+int count2 = numbers.Count(n => n > 5);  // 직접 카운트
+```
+
+2. **Any() vs Count() > 0**: 존재 여부만 확인한다면 `Any()` 사용
+
+```csharp
+// 비효율적: 모든 요소 세기
+if (numbers.Count(n => n > 5) > 0) { }
+
+// 효율적: 하나만 찾으면 즉시 반환
+if (numbers.Any(n => n > 5)) { }
 ```
 
 **Average - 평균 계산:**
