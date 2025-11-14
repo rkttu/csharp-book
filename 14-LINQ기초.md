@@ -540,13 +540,30 @@ Console.WriteLine("우수 학생 (메서드 구문): " + string.Join(", ", query
 
 ## 14.3 기본 LINQ 연산자
 
-LINQ의 강력함은 풍부한 연산자(Operator) 세트에서 나옵니다. 이 섹션에서는 가장 기본적이면서도 자주 사용되는 연산자들을 학습합니다. 모든 LINQ 연산자는 `IEnumerable<T>` 또는 `IQueryable<T>`에 대한 확장 메서드로 구현되어 있습니다.
+LINQ의 진정한 강력함은 표준 쿼리 연산자(Standard Query Operators)라 불리는 풍부한 연산자 세트에서 나옵니다. 이들은 함수형 프로그래밍의 고전적 패턴인 **map(변환)**, **filter(필터링)**, **reduce(축약)**를 C#에 적용한 것으로, 1950-60년대 Lisp에서 시작된 리스트 처리 함수들의 현대적 구현입니다. 모든 LINQ 연산자는 `IEnumerable<T>` 또는 `IQueryable<T>` 인터페이스에 대한 **확장 메서드**로 구현되어 있으며, 이는 8장에서 학습한 확장 메서드의 가장 성공적인 실전 활용 사례입니다.
+
+**연산자의 분류:**
+
+LINQ 연산자는 기능에 따라 여러 범주로 분류됩니다:
+
+- **필터링(Filtering)**: Where, OfType - 조건에 맞는 요소만 선택
+- **투영(Projection)**: Select, SelectMany - 요소를 다른 형태로 변환
+- **정렬(Ordering)**: OrderBy, OrderByDescending, ThenBy, Reverse - 요소 순서 변경
+- **집합(Set)**: Distinct, Union, Intersect, Except - 집합 연산
+- **분할(Partitioning)**: Take, Skip, TakeWhile, SkipWhile - 요소 일부 선택
+- **조인(Join)**: Join, GroupJoin - 여러 시퀀스 결합
+- **그룹화(Grouping)**: GroupBy - 키 기준 그룹 생성
+- **집계(Aggregation)**: Count, Sum, Average, Min, Max, Aggregate - 단일 값으로 축약
+- **변환(Conversion)**: ToList, ToArray, ToDictionary, ToLookup - 다른 컬렉션 타입으로 변환
+
+이 섹션에서는 가장 기본적이면서도 가장 자주 사용되는 연산자들을 깊이 있게 학습합니다.
 
 ### 14.3.1 Where (필터링)
 
-`Where` 연산자는 조건(Predicate)을 만족하는 요소만 선택하는 필터링 연산자입니다. SQL의 `WHERE` 절과 동일한 역할을 하며, 가장 많이 사용되는 LINQ 연산자 중 하나입니다.
+`Where` 연산자는 조건(Predicate)을 만족하는 요소만 선택하는 필터링 연산자입니다. 이는 함수형 프로그래밍의 **filter** 함수에 해당하며, SQL의 `WHERE` 절, Python의 `filter()`, JavaScript의 `Array.filter()`와 동일한 역할을 합니다. LINQ 연산자 중 가장 많이 사용되며, 데이터 처리 파이프라인의 첫 번째 단계로 자주 등장합니다.
 
-**시그니처:**
+**시그니처와 내부 동작:**
+
 ```csharp
 IEnumerable<T> Where<T>(this IEnumerable<T> source, Func<T, bool> predicate)
 ```
