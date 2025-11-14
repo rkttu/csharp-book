@@ -806,35 +806,79 @@ Console.WriteLine(string.Join(", ", query));  // 출력: 4, 5, 6
 
 ### 14.3.2 Select (투영)
 
-`Select` 연산자는 각 요소를 변환(Transform)하는 투영(Projection) 연산자입니다. SQL의 `SELECT` 절과 유사하며, 데이터의 형태를 변경하거나 일부만 추출할 때 사용합니다.
+`Select` 연산자는 각 요소를 변환(Transform)하는 투영(Projection) 연산자입니다. 이는 함수형 프로그래밍의 **map** 함수에 해당하며, SQL의 `SELECT` 절, Haskell의 `map`, JavaScript의 `Array.map()`, Python의 `map()`과 동일한 개념입니다. "투영(Projection)"이라는 용어는 고차원 데이터를 저차원으로 변환하는 수학적 개념에서 유래했으며, 데이터베이스 이론에서는 관계(Relation)의 특정 열(Column)만 선택하는 것을 의미합니다.
 
-**시그니처:**
+**함수형 프로그래밍의 맵 패턴:**
+
+`Select`는 함수형 프로그래밍의 핵심 패턴인 **맵(map)** 고차 함수를 구현합니다. 이 패턴의 본질은 **구조를 보존하면서 내용만 변환**하는 것입니다. 리스트의 각 요소에 함수를 적용하여 같은 길이의 새로운 리스트를 생성하되, 리스트의 구조(순서, 개수)는 유지됩니다. 이는 범주론(Category Theory)의 펑터(Functor) 개념과 연결되며, 수학적으로 엄밀한 기반을 가집니다.
+
+**시그니처와 제네릭 타입 변환:**
+
 ```csharp
-IEnumerable<TResult> Select<T, TResult>(this IEnumerable<T> source, Func<T, TResult> selector)
+// 기본 시그니처
+public static IEnumerable<TResult> Select<TSource, TResult>(
+    this IEnumerable<TSource> source,
+    Func<TSource, TResult> selector)
+
+// 인덱스 포함 오버로드
+public static IEnumerable<TResult> Select<TSource, TResult>(
+    this IEnumerable<TSource> source,
+    Func<TSource, int, TResult> selector)
 ```
 
-**기본 예제:**
+**내부 구현과 지연 실행:**
+
+`Select`도 `Where`와 마찬가지로 지연 실행되며, iterator 패턴을 사용합니다. 중요한 점은 `Select`가 요소를 변환하지만 원본은 절대 변경하지 않는다는 것입니다(불변성, Immutability). 이는 함수형 프로그래밍의 핵심 원칙입니다.
+
+```csharp
+// Select의 개념적 구현
+public static IEnumerable<TResult> Select<TSource, TResult>(
+    this IEnumerable<TSource> source,
+    Func<TSource, TResult> selector)
+{
+    foreach (TSource element in source)
+    {
+        yield return selector(element);  // 각 요소를 변환하여 반환
+    }
+}
+```
+
+**성능 특성:**
+
+- **시간 복잡도**: O(n) - 모든 요소에 변환 함수 적용
+- **공간 복잡도**: O(1) - 지연 실행으로 중간 컬렉션 미생성
+- **타입 변환**: `TSource`에서 `TResult`로 완전히 다른 타입으로 변환 가능
+- **구조 보존**: 입력과 출력의 요소 개수가 동일 (1:1 매핑)
+
+**기본 변환 예제:**
 
 ```csharp
 List<int> numbers = new List<int> { 1, 2, 3, 4, 5 };
 
-// 각 숫자를 제곱
+// 각 숫자를 제곱 (int → int)
 var squares = numbers.Select(n => n * n);
 Console.WriteLine("제곱: " + string.Join(", ", squares));
 // 출력: 제곱: 1, 4, 9, 16, 25
 
-// 각 숫자를 문자열로 변환
+// 타입 변환 (int → string)
 var strings = numbers.Select(n => n.ToString());
 Console.WriteLine("문자열: " + string.Join(", ", strings));
 // 출력: 문자열: 1, 2, 3, 4, 5
 
-// 각 숫자에 단위 추가
+// 문자열 보간 (int → string)
 var withUnit = numbers.Select(n => $"{n}개");
 Console.WriteLine("단위 추가: " + string.Join(", ", withUnit));
 // 출력: 단위 추가: 1개, 2개, 3개, 4개, 5개
+
+// 복잡한 계산 (int → double)
+var fahrenheit = numbers.Select(celsius => celsius * 9.0 / 5.0 + 32);
+Console.WriteLine("화씨: " + string.Join(", ", fahrenheit.Select(f => $"{f:F1}°F")));
+// 출력: 화씨: 33.8°F, 35.6°F, 37.4°F, 39.2°F, 41.0°F
 ```
 
-**객체의 특정 속성 선택:**
+**객체 속성 투영 - 데이터 쉐이핑:**
+
+실무에서 가장 흔한 패턴은 복잡한 객체에서 필요한 속성만 추출하는 것입니다. 이를 **데이터 쉐이핑(Data Shaping)** 또는 **DTO(Data Transfer Object) 패턴**이라고 합니다.
 
 ```csharp
 class Person
@@ -842,47 +886,54 @@ class Person
     public string Name { get; set; }
     public int Age { get; set; }
     public string City { get; set; }
+    public string Email { get; set; }
+    public DateTime BirthDate { get; set; }
 }
 
 List<Person> people = new List<Person>
 {
-    new Person { Name = "김철수", Age = 25, City = "서울" },
-    new Person { Name = "이영희", Age = 30, City = "부산" },
-    new Person { Name = "박민수", Age = 28, City = "대구" }
+    new Person { Name = "김철수", Age = 25, City = "서울", Email = "kim@example.com", BirthDate = new DateTime(1999, 3, 15) },
+    new Person { Name = "이영희", Age = 30, City = "부산", Email = "lee@example.com", BirthDate = new DateTime(1994, 7, 22) },
+    new Person { Name = "박민수", Age = 28, City = "대구", Email = "park@example.com", BirthDate = new DateTime(1996, 11, 5) }
 };
 
-// 이름만 추출
+// 단일 속성 추출
 var names = people.Select(p => p.Name);
 Console.WriteLine("이름: " + string.Join(", ", names));
 // 출력: 이름: 김철수, 이영희, 박민수
 
-// 나이만 추출
+// 계산된 속성
 var ages = people.Select(p => p.Age);
 Console.WriteLine("나이: " + string.Join(", ", ages));
 // 출력: 나이: 25, 30, 28
 ```
 
-**익명 타입으로 투영:**
+**익명 타입을 활용한 복합 투영:**
+
+C# 3.0에서 도입된 익명 타입은 `Select`와 완벽한 조합을 이룹니다. 일회성 데이터 구조를 즉석에서 정의하여 필요한 정보만 담을 수 있습니다.
 
 ```csharp
-// 여러 속성을 선택하여 새 객체 생성
+// 여러 속성을 선택하여 새 익명 객체 생성
 var summary = people.Select(p => new
 {
     FullName = p.Name,
-    Info = $"{p.Age}세, {p.City}"
+    Info = $"{p.Age}세, {p.City}",
+    ContactMasked = p.Email.Substring(0, 3) + "***"  // 개인정보 마스킹
 });
 
 foreach (var item in summary)
 {
-    Console.WriteLine($"{item.FullName}: {item.Info}");
+    Console.WriteLine($"{item.FullName}: {item.Info} ({item.ContactMasked})");
 }
 // 출력:
-// 김철수: 25세, 서울
-// 이영희: 30세, 부산
-// 박민수: 28세, 대구
+// 김철수: 25세, 서울 (kim***)
+// 이영희: 30세, 부산 (lee***)
+// 박민수: 28세, 대구 (par***)
 ```
 
-**인덱스를 사용하는 Select:**
+**인덱스를 활용한 변환:**
+
+두 번째 오버로드는 요소의 인덱스를 제공하여, 위치 정보를 변환에 포함시킬 수 있습니다.
 
 ```csharp
 string[] fruits = { "사과", "바나나", "오렌지" };
@@ -894,26 +945,43 @@ Console.WriteLine(string.Join("\n", indexed));
 // 1. 사과
 // 2. 바나나
 // 3. 오렌지
+
+// 인덱스 기반 조건부 변환
+var withPosition = fruits.Select((fruit, index) => new
+{
+    Position = index,
+    Name = fruit,
+    Type = index == 0 ? "첫번째" : index == fruits.Length - 1 ? "마지막" : "중간"
+});
 ```
 
-**Where와 Select 조합:**
+**Where와 Select의 조합 - 파이프라인:**
+
+실무에서 가장 흔한 패턴은 필터링 후 변환하는 것입니다. 이는 데이터 처리 파이프라인의 기본 패턴입니다.
 
 ```csharp
 List<int> scores = new List<int> { 85, 92, 78, 95, 88, 73, 91, 67 };
 
 // 90점 이상인 점수를 등급으로 변환
 var highGrades = scores
-    .Where(s => s >= 90)
-    .Select(s => $"{s}점 (A등급)");
+    .Where(s => s >= 90)      // 1단계: 필터링
+    .Select(s => $"{s}점 (A등급)");  // 2단계: 변환
 
 Console.WriteLine(string.Join("\n", highGrades));
 // 출력:
 // 92점 (A등급)
 // 95점 (A등급)
 // 91점 (A등급)
+
+// 복잡한 파이프라인
+var processedScores = scores
+    .Where(s => s >= 60)                           // 합격 점수만
+    .OrderByDescending(s => s)                      // 높은 순으로 정렬
+    .Select((s, index) => new { Rank = index + 1, Score = s })  // 순위 부여
+    .Take(5);                                        // 상위 5개
 ```
 
-**복잡한 변환:**
+**복잡한 비즈니스 로직 변환:**
 
 ```csharp
 class Order
@@ -922,31 +990,133 @@ class Order
     public string Product { get; set; }
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+    public DateTime OrderDate { get; set; }
 }
 
 List<Order> orders = new List<Order>
 {
-    new Order { OrderId = 1, Product = "노트북", Quantity = 2, UnitPrice = 1500000 },
-    new Order { OrderId = 2, Product = "마우스", Quantity = 5, UnitPrice = 35000 },
-    new Order { OrderId = 3, Product = "키보드", Quantity = 3, UnitPrice = 120000 }
+    new Order { OrderId = 1, Product = "노트북", Quantity = 2, UnitPrice = 1500000, OrderDate = DateTime.Now.AddDays(-5) },
+    new Order { OrderId = 2, Product = "마우스", Quantity = 5, UnitPrice = 35000, OrderDate = DateTime.Now.AddDays(-2) },
+    new Order { OrderId = 3, Product = "키보드", Quantity = 3, UnitPrice = 120000, OrderDate = DateTime.Now.AddDays(-1) }
 };
 
-// 총액 계산 및 새 형태로 투영
+// 복잡한 비즈니스 로직을 담은 투영
 var orderSummary = orders.Select(o => new
 {
     o.OrderId,
     o.Product,
-    TotalPrice = o.Quantity * o.UnitPrice
+    TotalPrice = o.Quantity * o.UnitPrice,
+    Tax = o.Quantity * o.UnitPrice * 0.1m,  // 10% 세금
+    FinalPrice = o.Quantity * o.UnitPrice * 1.1m,
+    DaysAgo = (DateTime.Now - o.OrderDate).Days,
+    Status = (DateTime.Now - o.OrderDate).Days < 3 ? "최근" : "이전"
 });
 
 foreach (var order in orderSummary)
 {
-    Console.WriteLine($"주문 #{order.OrderId}: {order.Product} - {order.TotalPrice:C0}");
+    Console.WriteLine($"주문 #{order.OrderId}: {order.Product}");
+    Console.WriteLine($"  금액: {order.TotalPrice:C0} + 세금 {order.Tax:C0} = {order.FinalPrice:C0}");
+    Console.WriteLine($"  주문: {order.DaysAgo}일 전 ({order.Status})");
 }
-// 출력:
-// 주문 #1: 노트북 - ₩3,000,000
-// 주문 #2: 마우스 - ₩175,000
-// 주문 #3: 키보드 - ₩360,000
+```
+
+**SelectMany - 평탄화(Flattening):**
+
+`Select`의 고급 변형인 `SelectMany`는 중첩된 컬렉션을 평탄화합니다. 각 요소가 컬렉션을 반환할 때 유용합니다.
+
+```csharp
+class Team
+{
+    public string Name { get; set; }
+    public List<string> Members { get; set; }
+}
+
+var teams = new List<Team>
+{
+    new Team { Name = "개발팀", Members = new List<string> { "김철수", "이영희" } },
+    new Team { Name = "디자인팀", Members = new List<string> { "박민수", "최지혜", "정다은" } }
+};
+
+// Select: 팀 목록 → 멤버 리스트의 리스트
+var nestedMembers = teams.Select(t => t.Members);
+// 결과: List<List<string>> - 이중 구조
+
+// SelectMany: 평탄화하여 모든 멤버를 하나의 시퀀스로
+var allMembers = teams.SelectMany(t => t.Members);
+Console.WriteLine("전체 멤버: " + string.Join(", ", allMembers));
+// 출력: 전체 멤버: 김철수, 이영희, 박민수, 최지혜, 정다은
+```
+
+**실무 패턴 - DTO 변환:**
+
+API 응답이나 뷰 모델 생성 시 자주 사용되는 패턴입니다.
+
+```csharp
+class User
+{
+    public int Id { get; set; }
+    public string Username { get; set; }
+    public string PasswordHash { get; set; }  // 민감 정보
+    public string Email { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+class UserDto
+{
+    public int Id { get; set; }
+    public string Username { get; set; }
+    public string Email { get; set; }
+    public string MemberSince { get; set; }
+}
+
+// 엔티티 → DTO 변환
+List<User> users = GetUsersFromDatabase();
+var userDtos = users.Select(u => new UserDto
+{
+    Id = u.Id,
+    Username = u.Username,
+    Email = u.Email,
+    MemberSince = u.CreatedAt.ToString("yyyy-MM-dd")
+    // PasswordHash는 의도적으로 제외 (보안)
+});
+```
+
+**주의사항과 모범 사례:**
+
+1. **순수 함수 사용**: 선택자 함수는 부작용이 없어야 합니다.
+
+```csharp
+// 나쁜 예 - 외부 상태 변경
+int counter = 0;
+var bad = numbers.Select(n =>
+{
+    counter++;  // 부작용! 피해야 함
+    return n * 2;
+});
+
+// 좋은 예 - 순수 함수
+var good = numbers.Select(n => n * 2);
+```
+
+2. **null 안정성**: 변환 중 null 참조를 주의하세요.
+
+```csharp
+// 안전한 변환
+var safeNames = people.Select(p => p?.Name ?? "Unknown");
+```
+
+3. **성능 고려**: 복잡한 계산은 캐싱을 고려하세요.
+
+```csharp
+// 비효율적: 매번 재계산
+var result1 = data.Select(x => ExpensiveCalculation(x));
+foreach (var item in result1) { } // 첫 번째 열거
+foreach (var item in result1) { } // 다시 계산!
+
+// 효율적: 결과 캐싱
+var result2 = data.Select(x => ExpensiveCalculation(x)).ToList();
+foreach (var item in result2) { } // 캐시된 결과 사용
+foreach (var item in result2) { } // 재계산 없음
 ```
 
 ### 14.3.3 OrderBy / OrderByDescending (정렬)
