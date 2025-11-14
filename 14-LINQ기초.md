@@ -1857,7 +1857,27 @@ Console.WriteLine($"큰 컬렉션 개수: {hugeCount:N0}");
 
 ### 14.4.2 Min, Max
 
-`Min`과 `Max` 연산자는 컬렉션에서 최소값과 최대값을 찾습니다.
+`Min`과 `Max` 연산자는 컬렉션에서 최소값과 최대값을 찾습니다. 이들은 선형 탐색(Linear Search)을 수행하여 O(n) 시간 복잡도를 가지며, 비교 가능한(`IComparable<T>`) 요소에 대해 작동합니다. 수학적으로는 전순서(Total Order)를 가진 집합에서의 최소/최대 원소를 찾는 연산입니다.
+
+**알고리즘과 성능:**
+
+`Min`과 `Max`는 단순한 선형 탐색 알고리즘을 사용합니다. 첫 번째 요소를 현재 최소/최대값으로 설정하고, 나머지 요소들을 순회하며 비교하여 갱신합니다. 이는 최적의 알고리즘이며(모든 요소를 확인해야 하므로), 어떤 정렬이나 추가 자료구조도 필요하지 않습니다.
+
+```csharp
+// 시그니처
+public static TSource Min<TSource>(this IEnumerable<TSource> source)
+public static TResult Min<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
+
+public static TSource Max<TSource>(this IEnumerable<TSource> source)
+public static TResult Max<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
+```
+
+**성능 특성:**
+
+- **시간 복잡도**: O(n) - 모든 요소를 한 번씩 검사
+- **공간 복잡도**: O(1) - 현재 최소/최대값만 유지
+- **즉시 실행**: 호출 즉시 전체 컬렉션 순회
+- **빈 시퀀스**: `InvalidOperationException` 발생
 
 **기본 예제:**
 
@@ -1873,26 +1893,68 @@ Console.WriteLine($"최소값: {min}");
 int max = numbers.Max();
 Console.WriteLine($"최대값: {max}");
 // 출력: 최대값: 9
+
+// 범위 계산
+int range = max - min;
+Console.WriteLine($"범위 (Range): {range}");
+// 출력: 범위 (Range): 8
+```
+
+**빈 시퀀스 처리:**
+
+빈 컬렉션에 대해 `Min`/`Max`를 호출하면 예외가 발생합니다. 안전하게 처리해야 합니다.
+
+```csharp
+var empty = new List<int>();
+
+try
+{
+    int min = empty.Min();  // InvalidOperationException!
+}
+catch (InvalidOperationException ex)
+{
+    Console.WriteLine($"오류: {ex.Message}");
+}
+
+// 안전한 패턴
+int safeMin = empty.Any() ? empty.Min() : 0;
+
+// 또는 DefaultIfEmpty 사용
+int safeMin2 = empty.DefaultIfEmpty().Min();  // 기본값(0) 반환
+
+// Nullable 타입 사용 (가장 권장)
+int? nullableMin = empty.Cast<int?>().Min();  // null 반환
+if (nullableMin.HasValue)
+{
+    Console.WriteLine($"최소값: {nullableMin.Value}");
+}
+else
+{
+    Console.WriteLine("값이 없습니다.");
+}
 ```
 
 **객체 속성의 Min, Max:**
+
+실무에서는 객체의 특정 속성을 기준으로 최소/최대를 찾는 경우가 많습니다.
 
 ```csharp
 class Student
 {
     public string Name { get; set; }
     public int Score { get; set; }
+    public int Age { get; set; }
 }
 
 List<Student> students = new List<Student>
 {
-    new Student { Name = "김철수", Score = 85 },
-    new Student { Name = "이영희", Score = 92 },
-    new Student { Name = "박민수", Score = 78 },
-    new Student { Name = "최지혜", Score = 95 }
+    new Student { Name = "김철수", Score = 85, Age = 20 },
+    new Student { Name = "이영희", Score = 92, Age = 22 },
+    new Student { Name = "박민수", Score = 78, Age = 19 },
+    new Student { Name = "최지혜", Score = 95, Age = 21 }
 };
 
-// 최고 점수
+// 최고 점수 (값만)
 int maxScore = students.Max(s => s.Score);
 Console.WriteLine($"최고 점수: {maxScore}");
 // 출력: 최고 점수: 95
@@ -1902,31 +1964,56 @@ int minScore = students.Min(s => s.Score);
 Console.WriteLine($"최저 점수: {minScore}");
 // 출력: 최저 점수: 78
 
-// 최고 점수를 받은 학생 찾기
+// 점수 차이
+Console.WriteLine($"점수 차이: {maxScore - minScore}점");
+// 출력: 점수 차이: 17점
+```
+
+**최소/최대값을 가진 객체 찾기:**
+
+`Min`/`Max`는 값만 반환하므로, 해당 값을 가진 객체를 찾으려면 추가 작업이 필요합니다.
+
+```csharp
+// 방법 1: Min/Max 후 Where로 찾기
+int maxScore = students.Max(s => s.Score);
 var topStudent = students.First(s => s.Score == maxScore);
 Console.WriteLine($"최우수 학생: {topStudent.Name} ({topStudent.Score}점)");
 // 출력: 최우수 학생: 최지혜 (95점)
 
-// 또는 OrderBy로 찾기
+// 방법 2: OrderBy로 직접 찾기 (더 효율적)
 var topStudent2 = students.OrderByDescending(s => s.Score).First();
 Console.WriteLine($"최우수 학생: {topStudent2.Name} ({topStudent2.Score}점)");
-// 출력: 최우수 학생: 최지혜 (95점)
+
+// 방법 3: Aggregate로 한 번에 찾기 (가장 효율적)
+var topStudent3 = students.Aggregate((max, current) => 
+    current.Score > max.Score ? current : max);
+Console.WriteLine($"최우수 학생: {topStudent3.Name} ({topStudent3.Score}점)");
+
+// 방법 4: MaxBy (C# 9.0+, .NET 6+)
+// var topStudent4 = students.MaxBy(s => s.Score);
 ```
 
-**날짜 비교:**
+**다양한 타입에서의 Min/Max:**
 
 ```csharp
+// 문자열 비교 (사전순)
+string[] names = { "Alice", "Charlie", "Bob", "David" };
+string minName = names.Min();  // "Alice"
+string maxName = names.Max();  // "David"
+
+// 날짜 비교
 class Event
 {
     public string Name { get; set; }
     public DateTime Date { get; set; }
+    public int Attendees { get; set; }
 }
 
 List<Event> events = new List<Event>
 {
-    new Event { Name = "회의", Date = new DateTime(2024, 11, 15) },
-    new Event { Name = "세미나", Date = new DateTime(2024, 11, 10) },
-    new Event { Name = "워크샵", Date = new DateTime(2024, 11, 20) }
+    new Event { Name = "회의", Date = new DateTime(2024, 11, 15), Attendees = 10 },
+    new Event { Name = "세미나", Date = new DateTime(2024, 11, 10), Attendees = 50 },
+    new Event { Name = "워크샵", Date = new DateTime(2024, 11, 20), Attendees = 30 }
 };
 
 // 가장 빠른 날짜
@@ -1939,28 +2026,109 @@ DateTime latest = events.Max(e => e.Date);
 Console.WriteLine($"가장 늦은 일정: {latest:yyyy-MM-dd}");
 // 출력: 가장 늦은 일정: 2024-11-20
 
-// 가장 빠른 일정 찾기
-var earliestEvent = events.First(e => e.Date == earliest);
-Console.WriteLine($"다가오는 일정: {earliestEvent.Name} ({earliestEvent.Date:yyyy-MM-dd})");
-// 출력: 다가오는 일정: 세미나 (2024-11-10)
+// 가장 많은 참석자 수
+int maxAttendees = events.Max(e => e.Attendees);
+Console.WriteLine($"최대 참석자: {maxAttendees}명");
+// 출력: 최대 참석자: 50명
+
+// 가장 많은 참석자가 있는 이벤트
+var popularEvent = events.First(e => e.Attendees == maxAttendees);
+Console.WriteLine($"인기 이벤트: {popularEvent.Name}");
+// 출력: 인기 이벤트: 세미나
+```
+
+**성능 최적화 - 한 번의 순회로 Min과 Max 모두 찾기:**
+
+`Min`과 `Max`를 별도로 호출하면 2번 순회합니다. `Aggregate`를 사용하면 1번 순회로 가능합니다.
+
+```csharp
+// 비효율적: 2번 순회
+int min = numbers.Min();  // 첫 번째 순회
+int max = numbers.Max();  // 두 번째 순회
+
+// 효율적: 1번 순회
+var minMax = numbers.Aggregate(
+    new { Min = int.MaxValue, Max = int.MinValue },
+    (acc, n) => new
+    {
+        Min = Math.Min(acc.Min, n),
+        Max = Math.Max(acc.Max, n)
+    }
+);
+Console.WriteLine($"최소: {minMax.Min}, 최대: {minMax.Max}");
+```
+
+**사용자 정의 비교:**
+
+`IComparer<T>`를 제공하여 비교 로직을 커스터마이즈할 수 있습니다 (일부 오버로드에서).
+
+```csharp
+// 절대값 기준 최소/최대
+var numbers = new[] { -5, 3, -8, 2, 7 };
+int minByAbs = numbers.OrderBy(n => Math.Abs(n)).First();  // 2
+int maxByAbs = numbers.OrderByDescending(n => Math.Abs(n)).First();  // -8
 ```
 
 ### 14.4.3 Aggregate
 
-`Aggregate` 연산자는 가장 범용적인 집계 연산자로, 사용자 정의 집계 로직을 구현할 수 있습니다. 함수형 프로그래밍의 `reduce` 또는 `fold` 연산과 동일한 개념입니다.
+`Aggregate` 연산자는 LINQ의 가장 강력하고 범용적인 집계 연산자입니다. 함수형 프로그래밍의 **reduce** (JavaScript, Python) 또는 **fold** (Haskell, Scala) 연산과 동일한 개념으로, 임의의 사용자 정의 집계 로직을 구현할 수 있습니다. `Count`, `Sum`, `Average`, `Min`, `Max` 등은 모두 `Aggregate`의 특수한 경우로 볼 수 있습니다.
 
-**시그니처:**
-```csharp
-TSource Aggregate<TSource>(this IEnumerable<TSource> source, Func<TSource, TSource, TAccumulate> func)
-TAccumulate Aggregate<TSource, TAccumulate>(this IEnumerable<TSource> source, TAccumulate seed, Func<TAccumulate, TSource, TAccumulate> func)
+**함수형 프로그래밍의 Fold/Reduce 패턴:**
+
+`Aggregate`는 1960년대 Lisp에서 유래한 고전적인 패턴입니다. 아이디어는 시퀀스를 하나의 값으로 "접는(fold)" 것입니다. 누산기(Accumulator)를 유지하면서 각 요소에 함수를 적용하여 누산기를 갱신하고, 최종적으로 누산기 값을 반환합니다.
+
+```
+[1, 2, 3, 4, 5] → fold with (+) and seed 0
+→ ((((0 + 1) + 2) + 3) + 4) + 5
+→ 15
 ```
 
-**기본 예제 - 합계:**
+**시그니처와 오버로드:**
+
+```csharp
+// 오버로드 1: 시드 없음 (첫 요소를 시드로 사용)
+public static TSource Aggregate<TSource>(
+    this IEnumerable<TSource> source,
+    Func<TSource, TSource, TSource> func)
+
+// 오버로드 2: 시드 제공
+public static TAccumulate Aggregate<TSource, TAccumulate>(
+    this IEnumerable<TSource> source,
+    TAccumulate seed,
+    Func<TAccumulate, TSource, TAccumulate> func)
+
+// 오버로드 3: 시드 + 결과 변환
+public static TResult Aggregate<TSource, TAccumulate, TResult>(
+    this IEnumerable<TSource> source,
+    TAccumulate seed,
+    Func<TAccumulate, TSource, TAccumulate> func,
+    Func<TAccumulate, TResult> resultSelector)
+```
+
+**내부 동작 메커니즘:**
+
+```csharp
+// Aggregate의 개념적 구현
+public static TAccumulate Aggregate<TSource, TAccumulate>(
+    this IEnumerable<TSource> source,
+    TAccumulate seed,
+    Func<TAccumulate, TSource, TAccumulate> func)
+{
+    TAccumulate accumulator = seed;
+    foreach (TSource element in source)
+    {
+        accumulator = func(accumulator, element);
+    }
+    return accumulator;
+}
+```
+
+**기본 예제 - 다양한 집계 연산:**
 
 ```csharp
 List<int> numbers = new List<int> { 1, 2, 3, 4, 5 };
 
-// Aggregate로 합계 계산
+// 오버로드 1: 시드 없음 - 첫 요소가 초기값
 int sum = numbers.Aggregate((acc, n) => acc + n);
 Console.WriteLine($"합계 (Aggregate): {sum}");
 // 출력: 합계 (Aggregate): 15
@@ -1973,6 +2141,8 @@ Console.WriteLine($"합계 (Aggregate): {sum}");
 ```
 
 **초기값(Seed) 사용:**
+
+오버로드 2는 초기값을 명시적으로 제공합니다. 이는 빈 시퀀스 처리나 타입 변환에 유용합니다.
 
 ```csharp
 // 초기값 100부터 시작
@@ -2088,6 +2258,161 @@ Console.WriteLine($"평균: {stats.Average:F2}");
 // 최소: 67
 // 최대: 95
 // 평균: 83.63
+```
+
+**Aggregate의 강력한 응용:**
+
+`Aggregate`는 단순한 집계를 넘어 복잡한 비즈니스 로직을 구현할 수 있습니다.
+
+```csharp
+// 팩토리얼 계산
+var factorial = Enumerable.Range(1, 5).Aggregate((acc, n) => acc * n);
+Console.WriteLine($"5! = {factorial}");  // 출력: 5! = 120
+
+// 문자열 리스트를 CSV로 변환
+var items = new[] { "사과", "바나나", "오렌지" };
+var csv = items.Aggregate((acc, item) => $"{acc},{item}");
+Console.WriteLine(csv);  // 출력: 사과,바나나,오렌지
+
+// 중첩된 컬렉션 평탄화
+var nestedLists = new List<List<int>>
+{
+    new List<int> { 1, 2 },
+    new List<int> { 3, 4, 5 },
+    new List<int> { 6 }
+};
+
+var flattened = nestedLists.Aggregate(
+    new List<int>(),
+    (acc, list) => { acc.AddRange(list); return acc; }
+);
+Console.WriteLine("평탄화: " + string.Join(", ", flattened));
+// 출력: 평탄화: 1, 2, 3, 4, 5, 6
+```
+
+**다른 집계 연산자와의 관계:**
+
+모든 집계 연산자는 `Aggregate`로 구현할 수 있습니다:
+
+```csharp
+var numbers = new[] { 1, 2, 3, 4, 5 };
+
+// Count를 Aggregate로
+int count = numbers.Aggregate(0, (acc, n) => acc + 1);
+
+// Sum을 Aggregate로
+int sum = numbers.Aggregate(0, (acc, n) => acc + n);
+
+// Average를 Aggregate로
+var avgResult = numbers.Aggregate(
+    new { Sum = 0, Count = 0 },
+    (acc, n) => new { Sum = acc.Sum + n, Count = acc.Count + 1 },
+    acc => (double)acc.Sum / acc.Count
+);
+
+// Min을 Aggregate로
+int min = numbers.Aggregate((acc, n) => acc < n ? acc : n);
+
+// Max를 Aggregate로
+int max = numbers.Aggregate((acc, n) => acc > n ? acc : n);
+```
+
+**성능 고려사항:**
+
+`Aggregate`는 강력하지만, 특수 목적 연산자(`Sum`, `Count` 등)가 있다면 그것을 사용하는 것이 더 명확하고 최적화되어 있습니다.
+
+```csharp
+// 권장: 명확하고 최적화됨
+int sum1 = numbers.Sum();
+
+// 가능하지만 불필요하게 복잡
+int sum2 = numbers.Aggregate(0, (acc, n) => acc + n);
+```
+
+**주의사항:**
+
+1. **빈 시퀀스**: 시드 없는 오버로드는 빈 시퀀스에 대해 예외 발생
+
+```csharp
+var empty = new List<int>();
+// int result = empty.Aggregate((acc, n) => acc + n);  // 예외!
+
+// 안전한 패턴: 시드 제공
+int safeResult = empty.Aggregate(0, (acc, n) => acc + n);  // 0 반환
+```
+
+2. **부작용 피하기**: 집계 함수는 순수 함수여야 합니다
+
+```csharp
+// 나쁜 예: 외부 상태 변경
+int externalCounter = 0;
+var bad = numbers.Aggregate(0, (acc, n) =>
+{
+    externalCounter++;  // 부작용! 피해야 함
+    return acc + n;
+});
+
+// 좋은 예: 순수 함수
+var good = numbers.Aggregate(0, (acc, n) => acc + n);
+```
+
+3. **가변 객체 주의**: 누산기가 가변 객체인 경우 조심
+
+```csharp
+// 위험: 같은 리스트 인스턴스를 계속 수정
+var dangerous = nestedLists.Aggregate(
+    new List<int>(),  // 이 리스트가 계속 변경됨
+    (acc, list) => { acc.AddRange(list); return acc; }
+);
+
+// 안전: 불변 패턴 사용 (비효율적이지만 안전)
+var safe = nestedLists.Aggregate(
+    Enumerable.Empty<int>(),
+    (acc, list) => acc.Concat(list)
+);
+```
+
+**Aggregate vs SelectMany:**
+
+평탄화 작업에는 `SelectMany`가 더 적합합니다:
+
+```csharp
+// Aggregate로 평탄화 (복잡)
+var flattened1 = nestedLists.Aggregate(
+    new List<int>(),
+    (acc, list) => { acc.AddRange(list); return acc; }
+);
+
+// SelectMany로 평탄화 (권장)
+var flattened2 = nestedLists.SelectMany(list => list);
+```
+
+**실무 팁:**
+
+- 간단한 집계는 특수 연산자(`Sum`, `Count` 등) 사용
+- 복잡하거나 사용자 정의 집계는 `Aggregate` 사용
+- 여러 통계를 한 번에 계산할 때 `Aggregate` 활용
+- 코드 가독성을 위해 복잡한 람다는 별도 메서드로 추출
+
+```csharp
+// 복잡한 람다 추출
+(sum, variance) CalculateStatistics(IEnumerable<double> numbers)
+{
+    var stats = numbers.Aggregate(
+        new { Sum = 0.0, SumOfSquares = 0.0, Count = 0 },
+        (acc, n) => new
+        {
+            Sum = acc.Sum + n,
+            SumOfSquares = acc.SumOfSquares + n * n,
+            Count = acc.Count + 1
+        }
+    );
+    
+    double mean = stats.Sum / stats.Count;
+    double variance = (stats.SumOfSquares / stats.Count) - (mean * mean);
+    
+    return (stats.Sum, variance);
+}
 ```
 
 ---
