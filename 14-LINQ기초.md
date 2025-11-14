@@ -1121,64 +1121,111 @@ foreach (var item in result2) { } // 재계산 없음
 
 ### 14.3.3 OrderBy / OrderByDescending (정렬)
 
-`OrderBy`와 `OrderByDescending` 연산자는 요소를 정렬하는 연산자입니다. SQL의 `ORDER BY` 절과 동일한 역할을 하며, 안정 정렬(Stable Sort) 알고리즘을 사용합니다.
+`OrderBy`와 `OrderByDescending` 연산자는 요소를 정렬하는 연산자입니다. SQL의 `ORDER BY` 절과 동일한 역할을 하며, 정렬은 데이터 분석과 사용자 인터페이스에서 필수적인 연산입니다. LINQ의 정렬 연산자는 **안정 정렬(Stable Sort)** 알고리즘을 사용하여, 같은 키를 가진 요소들의 상대적 순서를 보존합니다. 이는 다중 기준 정렬 시 특히 중요합니다.
 
-**시그니처:**
+**정렬 알고리즘의 역사와 LINQ의 선택:**
+
+정렬은 컴퓨터 과학에서 가장 오래되고 잘 연구된 문제 중 하나입니다. LINQ는 내부적으로 **IntroSort** 알고리즘을 사용합니다. IntroSort는 David Musser가 1997년에 제안한 하이브리드 알고리즘으로, 빠른 정렬(QuickSort)로 시작하되 재귀 깊이가 깊어지면 힙 정렬(HeapSort)로 전환하여 O(n log n)의 최악 시간 복잡도를 보장합니다. 또한 작은 부분 배열에서는 삽입 정렬(InsertionSort)을 사용하여 실전 성능을 최적화합니다.
+
+**시그니처와 반환 타입:**
+
 ```csharp
-IOrderedEnumerable<T> OrderBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> keySelector)
-IOrderedEnumerable<T> OrderByDescending<T, TKey>(this IEnumerable<T> source, Func<T, TKey> keySelector)
+// 오름차순 정렬
+public static IOrderedEnumerable<TSource> OrderBy<TSource, TKey>(
+    this IEnumerable<TSource> source,
+    Func<TSource, TKey> keySelector)
+
+// 내림차순 정렬
+public static IOrderedEnumerable<TSource> OrderByDescending<TSource, TKey>(
+    this IEnumerable<TSource> source,
+    Func<TSource, TKey> keySelector)
+
+// 사용자 정의 비교자 사용
+public static IOrderedEnumerable<TSource> OrderBy<TSource, TKey>(
+    this IEnumerable<TSource> source,
+    Func<TSource, TKey> keySelector,
+    IComparer<TKey> comparer)
 ```
 
-**기본 예제:**
+**IOrderedEnumerable<T>의 중요성:**
+
+반환 타입이 `IEnumerable<T>`가 아닌 `IOrderedEnumerable<T>`인 점에 주목하세요. 이는 후속 정렬(`ThenBy`, `ThenByDescending`)을 지원하기 위한 특별한 인터페이스입니다. 이를 통해 다중 키 정렬이 가능합니다.
+
+**성능 특성과 비용:**
+
+- **시간 복잡도**: 평균 O(n log n), 최악 O(n log n) (IntroSort)
+- **공간 복잡도**: O(n) - 전체 컬렉션을 메모리에 로드해야 함
+- **즉시 실행**: `OrderBy`는 지연 실행이지만, 내부적으로 전체 컬렉션을 버퍼링합니다
+- **안정성**: 동일한 키를 가진 요소의 원래 순서 유지
+
+```csharp
+// 정렬은 전체 컬렉션을 필요로 하므로 스트리밍 불가능
+var numbers = Enumerable.Range(1, 1000000);
+var sorted = numbers.OrderBy(n => n);  // 여기서는 아직 실행 안 됨
+var first = sorted.First();  // 이 시점에 전체 정렬 수행!
+```
+
+**기본 정렬 예제:**
 
 ```csharp
 List<int> numbers = new List<int> { 5, 2, 8, 1, 9, 3, 7, 4, 6 };
 
-// 오름차순 정렬
+// 오름차순 정렬 (Ascending)
 var ascending = numbers.OrderBy(n => n);
 Console.WriteLine("오름차순: " + string.Join(", ", ascending));
 // 출력: 오름차순: 1, 2, 3, 4, 5, 6, 7, 8, 9
 
-// 내림차순 정렬
+// 내림차순 정렬 (Descending)
 var descending = numbers.OrderByDescending(n => n);
 Console.WriteLine("내림차순: " + string.Join(", ", descending));
 // 출력: 내림차순: 9, 8, 7, 6, 5, 4, 3, 2, 1
+
+// 람다 없이 정렬 (identity function)
+var simple = numbers.OrderBy(n => n);  // n => n은 각 요소를 그대로 키로 사용
 ```
 
-**문자열 정렬:**
+**문자열 정렬과 문화권:**
+
+문자열 정렬은 문화권(Culture)에 따라 다를 수 있습니다. 한글, 영어, 숫자가 섞인 경우 기본 정렬 동작을 이해해야 합니다.
 
 ```csharp
-string[] names = { "이영희", "김철수", "박민수", "최지혜" };
+string[] names = { "이영희", "김철수", "박민수", "최지혜", "Alice", "Bob" };
 
-// 가나다순 정렬
+// 기본 문화권 정렬 (현재 시스템 문화권 사용)
 var sorted = names.OrderBy(name => name);
-Console.WriteLine("가나다순: " + string.Join(", ", sorted));
-// 출력: 가나다순: 김철수, 박민수, 이영희, 최지혜
+Console.WriteLine("기본 정렬: " + string.Join(", ", sorted));
+// 출력: 기본 정렬: Alice, Bob, 김철수, 박민수, 이영희, 최지혜
 
-// 길이순 정렬
+// 길이 기준 정렬
 var byLength = names.OrderBy(name => name.Length);
 Console.WriteLine("길이순: " + string.Join(", ", byLength));
-// 출력: 길이순: 김철수, 이영희, 박민수, 최지혜
+// 출력: 길이순: Bob, Alice, 김철수, 이영희, 박민수, 최지혜
+
+// 대소문자 무시 정렬
+var caseInsensitive = names.OrderBy(name => name, StringComparer.OrdinalIgnoreCase);
 ```
 
 **객체 속성으로 정렬:**
+
+실무에서 가장 흔한 패턴은 객체의 특정 속성을 기준으로 정렬하는 것입니다.
 
 ```csharp
 class Student
 {
     public string Name { get; set; }
     public int Score { get; set; }
+    public DateTime EnrollDate { get; set; }
 }
 
 List<Student> students = new List<Student>
 {
-    new Student { Name = "김철수", Score = 85 },
-    new Student { Name = "이영희", Score = 92 },
-    new Student { Name = "박민수", Score = 78 },
-    new Student { Name = "최지혜", Score = 95 }
+    new Student { Name = "김철수", Score = 85, EnrollDate = new DateTime(2022, 3, 1) },
+    new Student { Name = "이영희", Score = 92, EnrollDate = new DateTime(2021, 9, 1) },
+    new Student { Name = "박민수", Score = 78, EnrollDate = new DateTime(2022, 3, 1) },
+    new Student { Name = "최지혜", Score = 95, EnrollDate = new DateTime(2021, 9, 1) }
 };
 
-// 점수순 정렬
+// 점수 기준 내림차순
 var byScore = students.OrderByDescending(s => s.Score);
 Console.WriteLine("점수순:");
 foreach (var student in byScore)
@@ -1191,13 +1238,201 @@ foreach (var student in byScore)
 // 김철수: 85점
 // 박민수: 78점
 
-// 이름순 정렬
+// 이름 기준 오름차순
 var byName = students.OrderBy(s => s.Name);
 Console.WriteLine("\n이름순:");
 foreach (var student in byName)
 {
     Console.WriteLine($"{student.Name}: {student.Score}점");
 }
+// 출력:
+// 김철수: 85점
+// 박민수: 78점
+// 이영희: 92점
+// 최지혜: 95점
+```
+
+**다중 키 정렬 - ThenBy / ThenByDescending:**
+
+복잡한 정렬 규칙을 구현할 때는 `ThenBy`와 `ThenByDescending`을 사용합니다. 이들은 `IOrderedEnumerable<T>`에만 적용 가능합니다.
+
+```csharp
+class Employee
+{
+    public string Department { get; set; }
+    public string Name { get; set; }
+    public int Salary { get; set; }
+    public int YearsOfService { get; set; }
+}
+
+List<Employee> employees = new List<Employee>
+{
+    new Employee { Department = "개발", Name = "김철수", Salary = 5000, YearsOfService = 3 },
+    new Employee { Department = "개발", Name = "이영희", Salary = 6000, YearsOfService = 5 },
+    new Employee { Department = "영업", Name = "박민수", Salary = 4500, YearsOfService = 2 },
+    new Employee { Department = "영업", Name = "최지혜", Salary = 5500, YearsOfService = 4 },
+    new Employee { Department = "개발", Name = "정다은", Salary = 5000, YearsOfService = 2 }
+};
+
+// 복잡한 다중 정렬: 부서 → 연봉 (내림차순) → 근속연수 (내림차순) → 이름
+var sorted = employees
+    .OrderBy(e => e.Department)              // 1차: 부서 오름차순
+    .ThenByDescending(e => e.Salary)         // 2차: 연봉 내림차순
+    .ThenByDescending(e => e.YearsOfService) // 3차: 근속연수 내림차순
+    .ThenBy(e => e.Name);                    // 4차: 이름 오름차순
+
+Console.WriteLine("부서별 > 연봉순 > 근속연수순 > 이름순:");
+foreach (var emp in sorted)
+{
+    Console.WriteLine($"{emp.Department} - {emp.Name}: ₩{emp.Salary:N0} ({emp.YearsOfService}년)");
+}
+// 출력:
+// 개발 - 이영희: ₩6,000 (5년)
+// 개발 - 김철수: ₩5,000 (3년)
+// 개발 - 정다은: ₩5,000 (2년)
+// 영업 - 최지혜: ₩5,500 (4년)
+// 영업 - 박민수: ₩4,500 (2년)
+```
+
+**안정 정렬(Stable Sort)의 중요성:**
+
+LINQ의 안정 정렬은 동일한 키를 가진 요소들의 원래 순서를 보존합니다. 이는 다중 정렬에서 특히 중요합니다.
+
+```csharp
+var data = new[]
+{
+    new { Name = "Alice", Score = 85, Id = 1 },
+    new { Name = "Bob", Score = 90, Id = 2 },
+    new { Name = "Charlie", Score = 85, Id = 3 },
+    new { Name = "David", Score = 90, Id = 4 }
+};
+
+// Score로 정렬하되, 같은 점수 내에서는 원래 순서(Id) 유지
+var sorted = data.OrderBy(x => x.Score);
+foreach (var item in sorted)
+{
+    Console.WriteLine($"{item.Name}: {item.Score} (ID: {item.Id})");
+}
+// 출력:
+// Alice: 85 (ID: 1)     ← Score 85 중에서
+// Charlie: 85 (ID: 3)   ← 원래 순서 유지 (1 → 3)
+// Bob: 90 (ID: 2)       ← Score 90 중에서
+// David: 90 (ID: 4)     ← 원래 순서 유지 (2 → 4)
+```
+
+**사용자 정의 비교자 (Custom Comparer):**
+
+특수한 정렬 규칙이 필요한 경우 `IComparer<T>`를 구현하여 사용할 수 있습니다.
+
+```csharp
+// 길이 기준 비교자
+class StringLengthComparer : IComparer<string>
+{
+    public int Compare(string x, string y)
+    {
+        if (x == null && y == null) return 0;
+        if (x == null) return -1;
+        if (y == null) return 1;
+        
+        int lengthCompare = x.Length.CompareTo(y.Length);
+        if (lengthCompare != 0) return lengthCompare;
+        
+        // 길이가 같으면 사전순
+        return string.Compare(x, y, StringComparison.Ordinal);
+    }
+}
+
+string[] words = { "apple", "pie", "banana", "cat", "dog" };
+var sorted = words.OrderBy(w => w, new StringLengthComparer());
+Console.WriteLine(string.Join(", ", sorted));
+// 출력: cat, dog, pie, apple, banana
+```
+
+**Reverse - 순서 역전:**
+
+이미 정렬된 시퀀스의 순서를 뒤집을 때는 `Reverse()`를 사용합니다.
+
+```csharp
+var numbers = new[] { 1, 2, 3, 4, 5 };
+var reversed = numbers.Reverse();
+Console.WriteLine(string.Join(", ", reversed));
+// 출력: 5, 4, 3, 2, 1
+
+// OrderByDescending과 Reverse는 다름
+var desc = numbers.OrderByDescending(n => n);  // 정렬 알고리즘 사용
+var rev = numbers.OrderBy(n => n).Reverse();   // 정렬 후 역순 (비효율적)
+```
+
+**성능 최적화 팁:**
+
+1. **불필요한 정렬 피하기**: 정렬은 비용이 큽니다.
+
+```csharp
+// 나쁜 예: 첫 5개만 필요한데 전체 정렬
+var bad = data.OrderBy(x => x.Score).Take(5);
+
+// 개선: 부분 정렬 (사용자 정의 로직 필요)
+// 또는 Min/Max 연산자 사용
+```
+
+2. **ToList() 활용**: 같은 정렬 결과를 여러 번 사용하면 캐싱하세요.
+
+```csharp
+var sortedQuery = data.OrderBy(x => x.Value);  // 지연 실행
+foreach (var item in sortedQuery) { }  // 정렬 수행
+foreach (var item in sortedQuery) { }  // 다시 정렬! (비효율)
+
+var sortedList = data.OrderBy(x => x.Value).ToList();  // 즉시 실행 및 캐싱
+foreach (var item in sortedList) { }  // 캐시 사용
+foreach (var item in sortedList) { }  // 캐시 사용 (빠름)
+```
+
+**실무 패턴 - 동적 정렬:**
+
+사용자 입력에 따라 정렬 기준을 동적으로 변경해야 하는 경우가 많습니다.
+
+```csharp
+IEnumerable<Student> SortStudents(IEnumerable<Student> students, string sortBy, bool descending)
+{
+    IOrderedEnumerable<Student> query = sortBy switch
+    {
+        "Name" => descending 
+            ? students.OrderByDescending(s => s.Name)
+            : students.OrderBy(s => s.Name),
+        "Score" => descending
+            ? students.OrderByDescending(s => s.Score)
+            : students.OrderBy(s => s.Score),
+        _ => students.OrderBy(s => s.Name)  // 기본값
+    };
+    
+    return query;
+}
+
+// 사용
+var result = SortStudents(students, "Score", descending: true);
+```
+
+**주의사항:**
+
+1. **null 키 처리**: 정렬 키가 null일 수 있으면 주의하세요.
+
+```csharp
+// 위험: Name이 null이면 예외
+var sorted = people.OrderBy(p => p.Name);
+
+// 안전: null을 특별히 처리
+var safe = people.OrderBy(p => p.Name ?? string.Empty);
+```
+
+2. **비교 불가능한 타입**: 정렬 키가 `IComparable`을 구현하지 않으면 런타임 오류가 발생합니다.
+
+```csharp
+// 오류: MyCustomClass가 IComparable을 구현하지 않으면 실패
+var sorted = objects.OrderBy(o => o.CustomProperty);
+
+// 해결: 명시적 키 선택 또는 비교자 제공
+var fixed = objects.OrderBy(o => o.CustomProperty.SomeComparableField);
+```
 // 출력:
 // 김철수: 85점
 // 박민수: 78점
