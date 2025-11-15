@@ -1,0 +1,1227 @@
+# 24장. 단위 테스트
+
+단위 테스트(Unit Testing)는 현대 소프트웨어 개발의 필수 요소로, 코드의 가장 작은 단위를 독립적으로 검증하여 소프트웨어의 품질과 신뢰성을 보장하는 실천 방법입니다. 이 장에서는 .NET 생태계에서 가장 널리 사용되는 xUnit 프레임워크를 통해 단위 테스트의 기초부터 고급 기법까지 체계적으로 학습합니다.
+
+## 이 장에서 배울 내용
+
+이 장을 통해 독자 여러분은 단위 테스트의 이론과 실무를 모두 습득하게 됩니다:
+
+- **단위 테스트의 개념과 중요성**: 단위 테스트가 무엇이며, 왜 필요한지, 소프트웨어 개발 생명주기에서 어떤 역할을 하는지 이해합니다.
+
+- **xUnit 프레임워크 설정**: .NET 10 환경에서 xUnit 테스트 프레임워크를 설치하고 구성하는 방법을 학습합니다.
+
+- **테스트 작성 기초**: 첫 번째 단위 테스트를 작성하고 실행하여, 테스트 주도 개발의 기본 워크플로우를 익힙니다.
+
+- **AAA 패턴 적용**: Arrange-Act-Assert 패턴을 통해 명확하고 유지보수 가능한 테스트를 작성하는 방법을 배웁니다.
+
+- **매개변수화된 테스트**: 다양한 입력값에 대해 동일한 테스트 로직을 재사용하는 효율적인 방법을 학습합니다.
+
+- **Mocking 기법**: Moq 라이브러리를 활용하여 외부 의존성을 격리하고, 테스트 가능한 코드를 작성하는 고급 기법을 익힙니다.
+
+---
+
+## 24.1 단위 테스트란?
+
+단위 테스트는 소프트웨어의 가장 작은 테스트 가능한 단위를 독립적으로 검증하는 자동화된 테스트 방법입니다. 일반적으로 "단위"는 하나의 메서드나 함수를 의미하며, 단위 테스트는 이러한 개별 구성 요소가 예상대로 작동하는지 확인합니다.
+
+### 단위 테스트의 핵심 개념
+
+**테스트 가능한 단위의 정의:**
+
+C#에서 단위 테스트의 대상이 되는 "단위"는 다음과 같습니다:
+
+- **메서드**: 클래스의 public 메서드가 주요 테스트 대상입니다
+- **함수**: 정적 메서드나 확장 메서드도 테스트 단위가 됩니다
+- **속성**: 계산 로직이 포함된 속성(computed property)도 테스트할 수 있습니다
+- **클래스**: 작은 규모의 클래스 전체를 하나의 단위로 볼 수도 있습니다
+
+**단위 테스트의 특징:**
+
+1. **독립성(Isolation)**: 각 테스트는 다른 테스트나 외부 시스템에 의존하지 않고 독립적으로 실행됩니다.
+
+2. **자동화(Automation)**: 한 번 작성된 테스트는 자동으로 반복 실행할 수 있어야 합니다.
+
+3. **빠른 실행(Fast)**: 단위 테스트는 밀리초 단위로 실행되어야 하며, 전체 테스트 스위트도 몇 초 내에 완료되어야 합니다.
+
+4. **반복 가능(Repeatable)**: 동일한 입력에 대해 항상 동일한 결과를 반환해야 합니다.
+
+5. **자체 검증(Self-validating)**: 테스트 결과(성공/실패)가 명확해야 하며, 수동 확인이 필요하지 않습니다.
+
+### 단위 테스트의 필요성
+
+**코드 품질 향상:**
+
+단위 테스트는 코드의 정확성을 검증하고, 예상치 못한 동작을 조기에 발견합니다:
+
+```csharp
+// 테스트 없이 작성한 코드는 버그가 숨어있을 수 있습니다
+public class Calculator
+{
+    public int Divide(int a, int b)
+    {
+        return a / b;  // b가 0일 때 예외 발생!
+    }
+}
+
+// 단위 테스트를 통해 엣지 케이스를 발견하고 수정합니다
+[Fact]
+public void Divide_ByZero_ThrowsException()
+{
+    var calculator = new Calculator();
+    Assert.Throws<DivideByZeroException>(() => calculator.Divide(10, 0));
+}
+```
+
+**리팩토링 안전망:**
+
+테스트가 있으면 코드를 개선하거나 구조를 변경할 때 기존 기능이 여전히 작동하는지 확인할 수 있습니다.
+
+**문서화 효과:**
+
+잘 작성된 테스트는 코드의 의도와 사용 방법을 명확하게 보여주는 실행 가능한 문서 역할을 합니다.
+
+**버그 조기 발견:**
+
+개발 단계에서 버그를 발견하면 수정 비용이 크게 절감됩니다. 프로덕션 환경에서 발견된 버그는 수정 비용이 100배 이상 증가할 수 있습니다.
+
+### 테스트 피라미드
+
+소프트웨어 테스팅은 여러 수준으로 나뉘며, 각각의 역할이 있습니다:
+
+```
+       /\
+      /  \  E2E Tests (End-to-End)
+     /----\  
+    /      \ Integration Tests
+   /--------\
+  /          \ Unit Tests
+ /____________\
+```
+
+- **단위 테스트(Unit Tests)**: 가장 많은 수, 가장 빠른 실행, 가장 세밀한 검증
+- **통합 테스트(Integration Tests)**: 여러 컴포넌트 간 상호작용 검증
+- **E2E 테스트(End-to-End Tests)**: 사용자 시나리오 전체 검증, 가장 느림
+
+단위 테스트는 피라미드의 기초로, 전체 테스트 전략의 약 70%를 차지해야 합니다.
+
+### .NET 테스트 프레임워크 비교
+
+.NET 생태계에는 세 가지 주요 단위 테스트 프레임워크가 있습니다:
+
+| 프레임워크 | 특징 | 장점 |
+|-----------|------|------|
+| **xUnit** | 현대적 설계, 확장 가능 | .NET Core/5+에서 공식 권장, 병렬 실행 최적화 |
+| **NUnit** | 성숙한 생태계, JUnit 스타일 | 풍부한 assertion, 오랜 역사 |
+| **MSTest** | Microsoft 공식 | Visual Studio 깊은 통합 |
+
+이 책에서는 **.NET Core 이후 Microsoft가 공식적으로 권장**하고, **현대적 설계와 최고의 성능**을 자랑하는 **xUnit**을 사용합니다.
+
+---
+
+## 24.2 xUnit 설정
+
+xUnit은 .NET 커뮤니티에서 가장 널리 사용되는 단위 테스트 프레임워크로, 간결한 문법과 뛰어난 확장성을 제공합니다. 이 섹션에서는 .NET 10 환경에서 xUnit을 설정하는 전체 과정을 다룹니다.
+
+### xUnit 프로젝트 생성
+
+**테스트 프로젝트 구조:**
+
+일반적으로 솔루션은 다음과 같은 구조를 가집니다:
+
+```
+MySolution/
+├── src/
+│   └── MyLibrary/          # 실제 코드
+│       ├── Calculator.cs
+│       └── MyLibrary.csproj
+└── tests/
+    └── MyLibrary.Tests/    # 테스트 코드
+        ├── CalculatorTests.cs
+        └── MyLibrary.Tests.csproj
+```
+
+**실습: 계산기 라이브러리와 테스트 프로젝트 생성**
+
+터미널에서 다음 명령어를 순서대로 실행합니다:
+
+```bash
+# 작업 디렉토리 생성 및 이동
+mkdir UnitTestExample
+cd UnitTestExample
+
+# 소스 코드 프로젝트 생성 (클래스 라이브러리)
+dotnet new classlib -n Calculator
+cd Calculator
+
+# 기본 생성된 Class1.cs 삭제
+rm Class1.cs
+```
+
+`Calculator.cs` 파일을 생성하고 다음 코드를 작성합니다:
+
+```csharp
+namespace Calculator;
+
+public class BasicCalculator
+{
+    public int Add(int a, int b)
+    {
+        return a + b;
+    }
+
+    public int Subtract(int a, int b)
+    {
+        return a - b;
+    }
+
+    public int Multiply(int a, int b)
+    {
+        return a * b;
+    }
+
+    public double Divide(int a, int b)
+    {
+        if (b == 0)
+        {
+            throw new DivideByZeroException("0으로 나눌 수 없습니다.");
+        }
+        return (double)a / b;
+    }
+}
+```
+
+이제 테스트 프로젝트를 생성합니다:
+
+```bash
+# 상위 디렉토리로 이동
+cd ..
+
+# xUnit 테스트 프로젝트 생성
+dotnet new xunit -n Calculator.Tests
+cd Calculator.Tests
+
+# 테스트 프로젝트에서 Calculator 프로젝트 참조 추가
+dotnet add reference ../Calculator/Calculator.csproj
+```
+
+### 생성된 테스트 프로젝트 구조 이해
+
+`dotnet new xunit` 명령은 다음과 같은 파일들을 자동 생성합니다:
+
+**Calculator.Tests.csproj:**
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Calculator\Calculator.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+
+**주요 NuGet 패키지:**
+
+- **Microsoft.NET.Test.Sdk**: .NET 테스트 호스트 및 실행기
+- **xunit**: xUnit 핵심 프레임워크
+- **xunit.runner.visualstudio**: Visual Studio 및 VS Code 통합
+
+### 테스트 실행 확인
+
+기본 생성된 테스트를 실행하여 환경이 올바르게 설정되었는지 확인합니다:
+
+```bash
+# 테스트 프로젝트 디렉토리에서 실행
+dotnet test
+
+# 출력 예시:
+# Determining projects to restore...
+# All projects are up-to-date for restore.
+# Calculator -> /path/to/Calculator/bin/Debug/net10.0/Calculator.dll
+# Calculator.Tests -> /path/to/Calculator.Tests/bin/Debug/net10.0/Calculator.Tests.dll
+# Test run for /path/to/Calculator.Tests/bin/Debug/net10.0/Calculator.Tests.dll (.NET 10.0.0)
+# Microsoft (R) Test Execution Command Line Tool Version 17.11.0
+# Copyright (c) Microsoft Corporation.  All rights reserved.
+#
+# Starting test execution, please wait...
+# A total of 1 test files matched the specified pattern.
+#
+# Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: < 1 ms
+```
+
+---
+
+## 24.3 첫 번째 테스트 작성
+
+이제 실제로 Calculator 클래스를 테스트하는 단위 테스트를 작성해봅시다. xUnit의 기본 문법과 구조를 익히는 것이 이 섹션의 목표입니다.
+
+### 기본 테스트 작성
+
+`Calculator.Tests` 프로젝트의 기본 생성된 `UnitTest1.cs` 파일을 삭제하고, `CalculatorTests.cs` 파일을 생성합니다:
+
+```csharp
+using Calculator;
+using Xunit;
+
+namespace Calculator.Tests;
+
+public class BasicCalculatorTests
+{
+    [Fact]
+    public void Add_TwoPositiveNumbers_ReturnsSum()
+    {
+        // Arrange: 테스트 준비
+        var calculator = new BasicCalculator();
+        int a = 5;
+        int b = 3;
+
+        // Act: 테스트 실행
+        int result = calculator.Add(a, b);
+
+        // Assert: 결과 검증
+        Assert.Equal(8, result);
+    }
+
+    [Fact]
+    public void Subtract_TwoNumbers_ReturnsDifference()
+    {
+        // Arrange
+        var calculator = new BasicCalculator();
+
+        // Act
+        int result = calculator.Subtract(10, 4);
+
+        // Assert
+        Assert.Equal(6, result);
+    }
+
+    [Fact]
+    public void Multiply_TwoNumbers_ReturnsProduct()
+    {
+        // Arrange
+        var calculator = new BasicCalculator();
+
+        // Act
+        int result = calculator.Multiply(6, 7);
+
+        // Assert
+        Assert.Equal(42, result);
+    }
+
+    [Fact]
+    public void Divide_ValidNumbers_ReturnsQuotient()
+    {
+        // Arrange
+        var calculator = new BasicCalculator();
+
+        // Act
+        double result = calculator.Divide(10, 2);
+
+        // Assert
+        Assert.Equal(5.0, result);
+    }
+
+    [Fact]
+    public void Divide_ByZero_ThrowsException()
+    {
+        // Arrange
+        var calculator = new BasicCalculator();
+
+        // Act & Assert: 예외 발생 검증
+        Assert.Throws<DivideByZeroException>(() => calculator.Divide(10, 0));
+    }
+}
+```
+
+### xUnit 핵심 요소 이해
+
+**[Fact] 특성(Attribute):**
+
+`[Fact]`는 해당 메서드가 단위 테스트임을 xUnit에 알립니다. 이 특성이 붙은 메서드는 테스트 실행 시 자동으로 발견되고 실행됩니다.
+
+- 매개변수를 받지 않는 테스트 메서드
+- 항상 동일한 방식으로 실행되는 테스트
+- 테스트 메서드는 `public void` 또는 `public async Task` 형식이어야 함
+
+**Assert 클래스:**
+
+xUnit의 `Assert` 클래스는 테스트 결과를 검증하는 다양한 메서드를 제공합니다:
+
+```csharp
+// 값 동등성 검증
+Assert.Equal(expected, actual);        // 두 값이 같은지
+Assert.NotEqual(expected, actual);     // 두 값이 다른지
+
+// Boolean 검증
+Assert.True(condition);                // 조건이 true인지
+Assert.False(condition);               // 조건이 false인지
+
+// Null 검증
+Assert.Null(obj);                      // 객체가 null인지
+Assert.NotNull(obj);                   // 객체가 null이 아닌지
+
+// 예외 검증
+Assert.Throws<TException>(() => { }); // 특정 예외가 발생하는지
+
+// 컬렉션 검증
+Assert.Contains(item, collection);     // 컬렉션에 항목이 포함되는지
+Assert.Empty(collection);              // 컬렉션이 비어있는지
+Assert.NotEmpty(collection);           // 컬렉션이 비어있지 않은지
+```
+
+### 테스트 실행 및 결과 확인
+
+```bash
+dotnet test
+
+# 출력:
+# Passed!  - Failed:     0, Passed:     5, Skipped:     0, Total:     5, Duration: 15 ms
+```
+
+모든 테스트가 통과하면 초록색 체크마크와 함께 "Passed!"가 표시됩니다.
+
+### 테스트 명명 규칙
+
+명확한 테스트 이름은 실패 시 문제를 빠르게 파악하는 데 도움이 됩니다. 권장되는 명명 패턴:
+
+```
+[메서드명]_[시나리오]_[예상결과]
+```
+
+예시:
+- `Add_TwoPositiveNumbers_ReturnsSum`
+- `Divide_ByZero_ThrowsException`
+- `GetUser_InvalidId_ReturnsNull`
+
+### 실습: 실패하는 테스트 경험하기
+
+테스트가 실패하는 경우를 경험해봅시다. 다음 테스트를 추가합니다:
+
+```csharp
+[Fact]
+public void Add_AlwaysFails_ForDemonstration()
+{
+    var calculator = new BasicCalculator();
+    int result = calculator.Add(2, 2);
+    
+    // 의도적으로 잘못된 예상값
+    Assert.Equal(5, result);  // 실제는 4인데 5를 기대
+}
+```
+
+테스트를 실행하면:
+
+```bash
+dotnet test
+
+# 출력:
+# Failed Add_AlwaysFails_ForDemonstration [< 1 ms]
+# Error Message:
+#  Assert.Equal() Failure
+# Expected: 5
+# Actual:   4
+# 
+# Failed!  - Failed:     1, Passed:     5, Skipped:     0, Total:     6, Duration: 25 ms
+```
+
+xUnit은 어떤 테스트가 실패했는지, 예상값과 실제값이 무엇인지 명확하게 보여줍니다. 이 테스트는 삭제하고 계속 진행합니다.
+
+---
+
+## 24.4 Arrange-Act-Assert 패턴
+
+Arrange-Act-Assert(AAA) 패턴은 단위 테스트를 구조화하는 가장 널리 사용되는 방법입니다. 이 패턴은 테스트를 세 가지 명확한 단계로 나누어, 가독성과 유지보수성을 크게 향상시킵니다.
+
+### AAA 패턴의 세 단계
+
+**1. Arrange (준비):**
+- 테스트에 필요한 객체를 생성하고 초기화합니다
+- 테스트 데이터를 준비합니다
+- 의존성(dependencies)을 설정합니다
+
+**2. Act (실행):**
+- 테스트하려는 메서드나 동작을 실행합니다
+- 일반적으로 한 줄의 코드로 구성됩니다
+
+**3. Assert (검증):**
+- 실행 결과가 예상대로인지 확인합니다
+- 여러 개의 assertion을 사용할 수 있지만, 하나의 개념을 검증해야 합니다
+
+### AAA 패턴 적용 예시
+
+```csharp
+[Fact]
+public void Divide_TwoPositiveNumbers_ReturnsCorrectQuotient()
+{
+    // ============ Arrange ============
+    // 테스트 대상 객체 생성
+    var calculator = new BasicCalculator();
+    
+    // 테스트 데이터 준비
+    int dividend = 20;
+    int divisor = 4;
+    double expectedResult = 5.0;
+
+    // ============ Act ============
+    // 테스트할 메서드 실행
+    double actualResult = calculator.Divide(dividend, divisor);
+
+    // ============ Assert ============
+    // 결과 검증
+    Assert.Equal(expectedResult, actualResult);
+}
+```
+
+### 복잡한 시나리오에서의 AAA 패턴
+
+더 복잡한 클래스를 테스트하는 예제를 살펴봅시다:
+
+```csharp
+// 테스트 대상 클래스
+public class ShoppingCart
+{
+    private List<CartItem> _items = new();
+
+    public void AddItem(string productName, decimal price, int quantity)
+    {
+        _items.Add(new CartItem 
+        { 
+            ProductName = productName, 
+            Price = price, 
+            Quantity = quantity 
+        });
+    }
+
+    public decimal GetTotal()
+    {
+        return _items.Sum(item => item.Price * item.Quantity);
+    }
+
+    public int GetItemCount()
+    {
+        return _items.Sum(item => item.Quantity);
+    }
+}
+
+public class CartItem
+{
+    public string ProductName { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public int Quantity { get; set; }
+}
+```
+
+**AAA 패턴을 적용한 테스트:**
+
+```csharp
+public class ShoppingCartTests
+{
+    [Fact]
+    public void GetTotal_MultipleItems_ReturnsSumOfAllItemPrices()
+    {
+        // ============ Arrange ============
+        var cart = new ShoppingCart();
+        
+        // 여러 상품 추가
+        cart.AddItem("노트북", 1500000m, 1);
+        cart.AddItem("마우스", 50000m, 2);
+        cart.AddItem("키보드", 120000m, 1);
+        
+        // 예상 총액: 1,500,000 + (50,000 * 2) + 120,000 = 1,720,000
+        decimal expectedTotal = 1720000m;
+
+        // ============ Act ============
+        decimal actualTotal = cart.GetTotal();
+
+        // ============ Assert ============
+        Assert.Equal(expectedTotal, actualTotal);
+    }
+
+    [Fact]
+    public void GetItemCount_MultipleItems_ReturnsTotalQuantity()
+    {
+        // Arrange
+        var cart = new ShoppingCart();
+        cart.AddItem("상품A", 10000m, 3);
+        cart.AddItem("상품B", 20000m, 5);
+        cart.AddItem("상품C", 30000m, 2);
+        int expectedCount = 10;  // 3 + 5 + 2
+
+        // Act
+        int actualCount = cart.GetItemCount();
+
+        // Assert
+        Assert.Equal(expectedCount, actualCount);
+    }
+
+    [Fact]
+    public void GetTotal_EmptyCart_ReturnsZero()
+    {
+        // Arrange
+        var cart = new ShoppingCart();
+
+        // Act
+        decimal total = cart.GetTotal();
+
+        // Assert
+        Assert.Equal(0m, total);
+    }
+}
+```
+
+### AAA 패턴의 장점
+
+**1. 가독성:**
+각 단계가 명확히 구분되어 테스트의 의도를 빠르게 파악할 수 있습니다.
+
+**2. 유지보수성:**
+테스트 코드를 수정할 때 어느 부분을 변경해야 하는지 쉽게 알 수 있습니다.
+
+**3. 일관성:**
+팀 전체가 동일한 패턴을 사용하면 코드 리뷰와 협업이 원활해집니다.
+
+### 주석 사용 가이드
+
+주석으로 세 단계를 명시적으로 표시하는 것이 권장됩니다:
+
+```csharp
+[Fact]
+public void ExampleTest()
+{
+    // Arrange
+    // ... 준비 코드
+    
+    // Act
+    // ... 실행 코드
+    
+    // Assert
+    // ... 검증 코드
+}
+```
+
+일부 개발자는 빈 줄로 구분하는 것을 선호하기도 합니다:
+
+```csharp
+[Fact]
+public void ExampleTest()
+{
+    var calculator = new BasicCalculator();
+    int a = 10, b = 5;
+    
+    int result = calculator.Add(a, b);
+    
+    Assert.Equal(15, result);
+}
+```
+
+### 실습: AAA 패턴으로 테스트 리팩토링
+
+기존 테스트를 AAA 패턴으로 명확히 구조화해봅시다:
+
+```csharp
+// Before: 구조가 불명확한 테스트
+[Fact]
+public void TestCalculatorDivision()
+{
+    var calc = new BasicCalculator();
+    var result = calc.Divide(20, 5);
+    Assert.Equal(4.0, result);
+    Assert.NotEqual(0, result);
+}
+
+// After: AAA 패턴 적용
+[Fact]
+public void Divide_ValidInputs_ReturnsCorrectQuotient()
+{
+    // Arrange
+    var calculator = new BasicCalculator();
+    int dividend = 20;
+    int divisor = 5;
+    double expectedQuotient = 4.0;
+
+    // Act
+    double actualQuotient = calculator.Divide(dividend, divisor);
+
+    // Assert
+    Assert.Equal(expectedQuotient, actualQuotient);
+    // 추가 검증: 0이 아님 확인
+    Assert.NotEqual(0, actualQuotient);
+}
+```
+
+---
+
+## 24.5 테스트 데이터와 매개변수화된 테스트
+
+동일한 테스트 로직을 여러 입력값에 대해 반복 실행해야 하는 경우가 많습니다. xUnit의 **Theory**와 **InlineData**를 사용하면 코드 중복 없이 효율적으로 여러 시나리오를 테스트할 수 있습니다.
+
+### Theory와 InlineData 소개
+
+**[Theory] 특성:**
+
+`[Theory]`는 매개변수화된 테스트를 나타냅니다. `[Fact]`와 달리 매개변수를 받아 여러 데이터 세트로 실행됩니다.
+
+**[InlineData] 특성:**
+
+`[InlineData]`는 테스트 메서드에 전달할 데이터를 지정합니다. 여러 개를 나열하면 각각에 대해 테스트가 실행됩니다.
+
+### 기본 사용 예제
+
+```csharp
+public class CalculatorTheoryTests
+{
+    [Theory]
+    [InlineData(2, 3, 5)]      // 2 + 3 = 5
+    [InlineData(0, 0, 0)]      // 0 + 0 = 0
+    [InlineData(-1, 1, 0)]     // -1 + 1 = 0
+    [InlineData(100, 200, 300)] // 100 + 200 = 300
+    [InlineData(-5, -3, -8)]   // -5 + -3 = -8
+    public void Add_VariousInputs_ReturnsCorrectSum(int a, int b, int expected)
+    {
+        // Arrange
+        var calculator = new BasicCalculator();
+
+        // Act
+        int result = calculator.Add(a, b);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+}
+```
+
+테스트를 실행하면:
+
+```bash
+dotnet test
+
+# 출력:
+# Passed Add_VariousInputs_ReturnsCorrectSum(a: 2, b: 3, expected: 5) [< 1 ms]
+# Passed Add_VariousInputs_ReturnsCorrectSum(a: 0, b: 0, expected: 0) [< 1 ms]
+# Passed Add_VariousInputs_ReturnsCorrectSum(a: -1, b: 1, expected: 0) [< 1 ms]
+# Passed Add_VariousInputs_ReturnsCorrectSum(a: 100, b: 200, expected: 300) [< 1 ms]
+# Passed Add_VariousInputs_ReturnsCorrectSum(a: -5, b: -3, expected: -8) [< 1 ms]
+```
+
+각 `InlineData`에 대해 별도의 테스트가 실행됩니다!
+
+### 엣지 케이스 테스트
+
+매개변수화된 테스트는 경계값(boundary values)과 엣지 케이스를 체계적으로 검증하는 데 이상적입니다:
+
+```csharp
+[Theory]
+[InlineData(10, 2, 5.0)]           // 정상적인 나눗셈
+[InlineData(7, 2, 3.5)]            // 소수점 결과
+[InlineData(0, 5, 0.0)]            // 0을 나누기
+[InlineData(-10, 2, -5.0)]         // 음수 나눗셈
+[InlineData(10, -2, -5.0)]         // 음수 제수
+[InlineData(int.MaxValue, 1, (double)int.MaxValue)] // 최대값
+public void Divide_VariousScenarios_ReturnsCorrectQuotient(
+    int dividend, 
+    int divisor, 
+    double expected)
+{
+    // Arrange
+    var calculator = new BasicCalculator();
+
+    // Act
+    double result = calculator.Divide(dividend, divisor);
+
+    // Assert
+    Assert.Equal(expected, result, precision: 10);  // 부동소수점 비교 시 정밀도 지정
+}
+```
+
+### 복잡한 데이터 타입 사용
+
+문자열이나 다른 타입도 매개변수로 전달할 수 있습니다:
+
+```csharp
+public class StringValidator
+{
+    public bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        
+        return email.Contains("@") && email.Contains(".");
+    }
+}
+
+public class StringValidatorTests
+{
+    [Theory]
+    [InlineData("test@example.com", true)]
+    [InlineData("user@domain.co.kr", true)]
+    [InlineData("invalid.email.com", false)]  // @ 없음
+    [InlineData("@example.com", false)]       // 앞 부분 없음
+    [InlineData("test@", false)]              // . 없음
+    [InlineData("", false)]                   // 빈 문자열
+    [InlineData(null, false)]                 // null
+    public void IsValidEmail_VariousInputs_ReturnsExpectedResult(
+        string email, 
+        bool expected)
+    {
+        // Arrange
+        var validator = new StringValidator();
+
+        // Act
+        bool result = validator.IsValidEmail(email);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+}
+```
+
+### MemberData를 사용한 고급 데이터 제공
+
+더 복잡한 테스트 데이터는 `[MemberData]`로 제공할 수 있습니다:
+
+```csharp
+public class AdvancedCalculatorTests
+{
+    public static IEnumerable<object[]> TestData()
+    {
+        yield return new object[] { 2, 3, 5 };
+        yield return new object[] { 10, 20, 30 };
+        yield return new object[] { -5, 5, 0 };
+        yield return new object[] { 0, 0, 0 };
+    }
+
+    [Theory]
+    [MemberData(nameof(TestData))]
+    public void Add_MemberDataSource_ReturnsCorrectSum(int a, int b, int expected)
+    {
+        var calculator = new BasicCalculator();
+        int result = calculator.Add(a, b);
+        Assert.Equal(expected, result);
+    }
+}
+```
+
+### ClassData를 사용한 재사용 가능한 테스트 데이터
+
+테스트 데이터를 별도 클래스로 분리하여 여러 테스트에서 재사용할 수 있습니다:
+
+```csharp
+public class CalculatorTestData : IEnumerable<object[]>
+{
+    public IEnumerator<object[]> GetEnumerator()
+    {
+        yield return new object[] { 1, 1, 2 };
+        yield return new object[] { 5, 5, 10 };
+        yield return new object[] { -1, 1, 0 };
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+public class ClassDataExampleTests
+{
+    [Theory]
+    [ClassData(typeof(CalculatorTestData))]
+    public void Add_ClassDataSource_ReturnsCorrectSum(int a, int b, int expected)
+    {
+        var calculator = new BasicCalculator();
+        int result = calculator.Add(a, b);
+        Assert.Equal(expected, result);
+    }
+}
+```
+
+### 매개변수화된 테스트의 장점
+
+**1. 코드 중복 제거:**
+동일한 로직을 반복 작성하지 않고 여러 시나리오를 테스트합니다.
+
+**2. 포괄적인 테스트:**
+다양한 입력값을 쉽게 추가하여 테스트 커버리지를 높일 수 있습니다.
+
+**3. 유지보수 용이:**
+테스트 로직을 한 곳에서 관리하므로, 수정 시 한 번만 변경하면 됩니다.
+
+---
+
+## 24.6 Moq를 이용한 Mocking
+
+실제 애플리케이션에서는 테스트하려는 코드가 데이터베이스, 외부 API, 파일 시스템 등 외부 의존성을 가지는 경우가 많습니다. **Moq**는 이러한 의존성을 가짜 객체(Mock)로 대체하여 단위 테스트를 독립적으로 실행할 수 있게 해주는 강력한 Mocking 라이브러리입니다.
+
+### Mocking의 필요성
+
+**문제 상황:**
+
+다음과 같은 서비스를 테스트한다고 가정해봅시다:
+
+```csharp
+public interface IUserRepository
+{
+    User? GetUserById(int id);
+    void SaveUser(User user);
+}
+
+public class UserService
+{
+    private readonly IUserRepository _repository;
+
+    public UserService(IUserRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public string GetUserDisplayName(int userId)
+    {
+        var user = _repository.GetUserById(userId);
+        
+        if (user == null)
+            return "Unknown User";
+        
+        return $"{user.FirstName} {user.LastName}";
+    }
+}
+
+public class User
+{
+    public int Id { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+}
+```
+
+`UserService`를 테스트하려면 `IUserRepository` 구현이 필요합니다. 하지만:
+- 실제 데이터베이스에 연결하면 테스트가 느려집니다
+- 테스트 데이터 설정이 복잡합니다
+- 데이터베이스 상태에 따라 테스트 결과가 달라질 수 있습니다
+
+**해결책: Mocking**
+
+Mock 객체를 사용하면 실제 데이터베이스 없이도 테스트할 수 있습니다!
+
+### Moq 설치
+
+```bash
+cd Calculator.Tests
+dotnet add package Moq
+```
+
+### 기본 Mocking 예제
+
+```csharp
+using Moq;
+using Xunit;
+
+public class UserServiceTests
+{
+    [Fact]
+    public void GetUserDisplayName_ExistingUser_ReturnsFullName()
+    {
+        // Arrange
+        // Mock 객체 생성
+        var mockRepository = new Mock<IUserRepository>();
+        
+        // Mock의 동작 설정: GetUserById(1) 호출 시 반환값 지정
+        mockRepository
+            .Setup(repo => repo.GetUserById(1))
+            .Returns(new User 
+            { 
+                Id = 1, 
+                FirstName = "홍", 
+                LastName = "길동" 
+            });
+        
+        // Mock 객체를 주입하여 서비스 생성
+        var service = new UserService(mockRepository.Object);
+
+        // Act
+        string displayName = service.GetUserDisplayName(1);
+
+        // Assert
+        Assert.Equal("홍 길동", displayName);
+    }
+
+    [Fact]
+    public void GetUserDisplayName_NonExistingUser_ReturnsUnknown()
+    {
+        // Arrange
+        var mockRepository = new Mock<IUserRepository>();
+        
+        // GetUserById가 null을 반환하도록 설정
+        mockRepository
+            .Setup(repo => repo.GetUserById(999))
+            .Returns((User?)null);
+        
+        var service = new UserService(mockRepository.Object);
+
+        // Act
+        string displayName = service.GetUserDisplayName(999);
+
+        // Assert
+        Assert.Equal("Unknown User", displayName);
+    }
+}
+```
+
+### Moq의 핵심 개념
+
+**1. Setup - Mock 동작 정의:**
+
+```csharp
+// 특정 인자에 대해 반환값 지정
+mock.Setup(m => m.GetData(42)).Returns("result");
+
+// 모든 인자에 대해 동일한 동작
+mock.Setup(m => m.GetData(It.IsAny<int>())).Returns("default");
+
+// 조건부 반환
+mock.Setup(m => m.GetUser(It.Is<int>(id => id > 0)))
+    .Returns(new User());
+```
+
+**2. Verify - 메서드 호출 검증:**
+
+```csharp
+// 메서드가 정확히 한 번 호출되었는지 검증
+mock.Verify(m => m.SaveData(It.IsAny<string>()), Times.Once);
+
+// 메서드가 호출되지 않았는지 검증
+mock.Verify(m => m.DeleteData(It.IsAny<int>()), Times.Never);
+
+// 메서드가 특정 횟수만큼 호출되었는지
+mock.Verify(m => m.Log(It.IsAny<string>()), Times.Exactly(3));
+```
+
+### 실전 예제: 이메일 서비스 테스트
+
+```csharp
+public interface IEmailSender
+{
+    void SendEmail(string to, string subject, string body);
+}
+
+public class OrderService
+{
+    private readonly IEmailSender _emailSender;
+
+    public OrderService(IEmailSender emailSender)
+    {
+        _emailSender = emailSender;
+    }
+
+    public void PlaceOrder(string customerEmail, string productName)
+    {
+        // 주문 처리 로직...
+        
+        // 주문 확인 이메일 발송
+        _emailSender.SendEmail(
+            customerEmail,
+            "주문 확인",
+            $"{productName} 주문이 완료되었습니다."
+        );
+    }
+}
+
+public class OrderServiceTests
+{
+    [Fact]
+    public void PlaceOrder_ValidOrder_SendsConfirmationEmail()
+    {
+        // Arrange
+        var mockEmailSender = new Mock<IEmailSender>();
+        var orderService = new OrderService(mockEmailSender.Object);
+        
+        string customerEmail = "customer@example.com";
+        string productName = "노트북";
+
+        // Act
+        orderService.PlaceOrder(customerEmail, productName);
+
+        // Assert
+        // SendEmail이 정확한 인자로 호출되었는지 검증
+        mockEmailSender.Verify(
+            sender => sender.SendEmail(
+                customerEmail,
+                "주문 확인",
+                "노트북 주문이 완료되었습니다."
+            ),
+            Times.Once
+        );
+    }
+}
+```
+
+### 예외 발생 시뮬레이션
+
+Mock을 사용하여 예외 상황도 테스트할 수 있습니다:
+
+```csharp
+public class DataService
+{
+    private readonly IUserRepository _repository;
+
+    public DataService(IUserRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public bool TrySaveUser(User user)
+    {
+        try
+        {
+            _repository.SaveUser(user);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+}
+
+public class DataServiceTests
+{
+    [Fact]
+    public void TrySaveUser_RepositoryThrowsException_ReturnsFalse()
+    {
+        // Arrange
+        var mockRepository = new Mock<IUserRepository>();
+        
+        // SaveUser 호출 시 예외 발생하도록 설정
+        mockRepository
+            .Setup(repo => repo.SaveUser(It.IsAny<User>()))
+            .Throws<InvalidOperationException>();
+        
+        var service = new DataService(mockRepository.Object);
+        var user = new User { Id = 1, FirstName = "Test", LastName = "User" };
+
+        // Act
+        bool result = service.TrySaveUser(user);
+
+        // Assert
+        Assert.False(result);
+    }
+}
+```
+
+### It.IsAny<T> - 유연한 매개변수 매칭
+
+특정 값이 아닌 모든 값에 대해 동작을 지정할 때 사용합니다:
+
+```csharp
+// 어떤 int 값이든 동일한 결과 반환
+mock.Setup(m => m.GetData(It.IsAny<int>())).Returns("data");
+
+// 어떤 문자열이든 저장 허용
+mock.Setup(m => m.Save(It.IsAny<string>())).Returns(true);
+```
+
+### 속성 Mocking
+
+인터페이스의 속성도 Mock할 수 있습니다:
+
+```csharp
+public interface IConfiguration
+{
+    string DatabaseConnection { get; }
+    int MaxRetries { get; }
+}
+
+[Fact]
+public void UseConfiguration_Test()
+{
+    // Arrange
+    var mockConfig = new Mock<IConfiguration>();
+    mockConfig.Setup(c => c.DatabaseConnection).Returns("test-connection");
+    mockConfig.Setup(c => c.MaxRetries).Returns(3);
+
+    // 테스트에서 mockConfig.Object 사용
+}
+```
+
+### Mocking 모범 사례
+
+**1. 인터페이스 기반 설계:**
+의존성은 항상 인터페이스로 정의하여 Mock 가능하게 만듭니다.
+
+**2. 하나의 Mock, 하나의 테스트:**
+각 테스트에서 새로운 Mock 인스턴스를 생성하여 테스트 간 독립성을 유지합니다.
+
+**3. Verify를 통한 동작 검증:**
+중요한 메서드 호출은 반드시 Verify로 확인합니다.
+
+**4. 과도한 Mocking 주의:**
+너무 많은 의존성을 Mock해야 한다면, 설계를 재검토해야 할 신호일 수 있습니다.
+
+---
+
+## 24장 정리 및 요약
+
+이 장에서는 .NET 애플리케이션의 품질을 보장하는 단위 테스트의 전체 워크플로우를 학습했습니다.
+
+### 핵심 개념 정리
+
+**1. 단위 테스트의 중요성:**
+- 코드의 정확성을 자동으로 검증
+- 리팩토링의 안전망 제공
+- 실행 가능한 문서 역할
+- 버그를 조기에 발견하여 비용 절감
+
+**2. xUnit 프레임워크:**
+- .NET의 현대적이고 권장되는 테스트 프레임워크
+- `[Fact]`로 단순 테스트, `[Theory]`로 매개변수화된 테스트 작성
+- `dotnet test` 명령으로 간편한 실행
+
+**3. AAA 패턴:**
+- Arrange (준비), Act (실행), Assert (검증)의 세 단계
+- 테스트의 가독성과 유지보수성을 크게 향상
+- 일관된 테스트 구조로 팀 협업 증진
+
+**4. 매개변수화된 테스트:**
+- `[InlineData]`로 다양한 입력값 테스트
+- `[MemberData]`와 `[ClassData]`로 복잡한 데이터 제공
+- 코드 중복 없이 포괄적인 테스트 작성
+
+**5. Moq를 통한 Mocking:**
+- 외부 의존성을 격리하여 순수한 단위 테스트 구현
+- `Setup()`으로 Mock 동작 정의
+- `Verify()`로 메서드 호출 검증
+- 예외 상황 시뮬레이션
+
+### 실습 체크리스트
+
+다음 항목을 직접 해보며 학습 내용을 확인하세요:
+
+- [ ] xUnit 테스트 프로젝트 생성 및 실행
+- [ ] `[Fact]`를 사용한 기본 테스트 작성
+- [ ] AAA 패턴을 적용한 명확한 테스트 구조화
+- [ ] `[Theory]`와 `[InlineData]`로 매개변수화된 테스트 작성
+- [ ] Moq를 사용하여 의존성 Mocking
+- [ ] `Verify()`로 메서드 호출 검증
+
+### 다음 단계
+
+단위 테스트는 소프트웨어 품질 보증의 시작입니다. 이후 학습할 내용:
+
+- **통합 테스트**: 여러 컴포넌트가 함께 작동하는 것을 검증
+- **테스트 커버리지**: 코드의 어느 부분이 테스트되었는지 분석
+- **TDD(Test-Driven Development)**: 테스트 먼저 작성하는 개발 방법론
+- **CI/CD 통합**: 자동화된 빌드 파이프라인에서 테스트 실행
+
+25장 "디버깅과 로깅"에서는 코드의 문제를 진단하고 해결하는 추가적인 기법들을 학습하게 됩니다!
