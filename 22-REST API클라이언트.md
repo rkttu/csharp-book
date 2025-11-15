@@ -1406,19 +1406,57 @@ async Task ApiKeyRequestAsync(string apiKey)
 
 ## 22.4 JSON 데이터 파싱
 
-REST API는 주로 JSON 형식으로 데이터를 주고받습니다. C#에서는 `System.Text.Json` 네임스페이스를 사용하여 JSON을 처리합니다.
+JSON(JavaScript Object Notation)은 2001년 Douglas Crockford가 제안한 경량 데이터 교환 형식으로, XML의 복잡성에 대한 반발로 탄생했습니다. JSON은 **인간이 읽기 쉽고(Human-readable)**, **기계가 파싱하기 쉬우며(Machine-parseable)**, **언어 독립적(Language-independent)**인 특성으로 REST API의 사실상 표준 데이터 형식이 되었습니다.
 
-### JSON 역직렬화 (Deserialization)
+**JSON의 역사적 맥락:**
+
+- **2001년**: Douglas Crockford가 JSON 명세 발표 (json.org)
+- **2005년**: AJAX (Asynchronous JavaScript and XML)의 부상과 함께 JSON 대중화
+- **2006년**: RFC 4627로 표준화
+- **2013년**: ECMA-404 국제 표준
+- **2017년**: RFC 8259로 갱신 (현재 표준)
+- **2020년대**: GraphQL, gRPC 등 새로운 프로토콜과 공존
+
+JSON은 XML 대비 다음과 같은 장점이 있습니다:
+
+| 특성 | JSON | XML |
+|------|------|-----|
+| 크기 | 작음 (~30% 절감) | 큼 (태그 오버헤드) |
+| 가독성 | 높음 | 중간 (태그 verbose) |
+| 파싱 속도 | 빠름 | 느림 |
+| 데이터 타입 | 내장 (숫자, 불리언) | 없음 (모두 문자열) |
+| 네임스페이스 | 없음 | 있음 (XML 복잡성) |
+| 스키마 검증 | JSON Schema | XSD |
+
+**C#의 JSON 라이브러리 진화:**
+
+- **.NET Framework 3.5**: `JavaScriptSerializer` (System.Web.Script.Serialization) - 느리고 제한적
+- **.NET Framework 4.5**: `DataContractJsonSerializer` - 복잡하고 무거움
+- **Newtonsoft.Json (Json.NET)**: 2008년부터 사실상 표준, 기능 풍부, 널리 사용됨
+- **.NET Core 3.0+**: `System.Text.Json` - 고성능, 제로 할당 목표, 내장 라이브러리
+
+`System.Text.Json`은 성능과 보안을 최우선으로 설계되었으며, 다음과 같은 특징이 있습니다:
+
+- **고성능**: Span<T>와 Memory<T>를 활용한 제로 할당 파싱
+- **Utf8JsonReader**: UTF-8 바이트를 직접 읽어 변환 오버헤드 제거
+- **보안**: 기본적으로 안전한 설정 (깊이 제한, 순환 참조 방지)
+- **AOT 친화적**: Ahead-of-Time 컴파일 지원
+
+### JSON 역직렬화 (Deserialization) - JSON → C# 객체
+
+역직렬화는 JSON 문자열을 C# 객체로 변환하는 과정입니다:
 
 ```csharp
 using System.Text.Json;
 
-// JSON 데이터를 표현할 클래스
+// JSON 데이터를 표현할 DTO (Data Transfer Object)
 class User
 {
     public int Id { get; set; }
     public string Name { get; set; }
     public string Email { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public bool IsActive { get; set; }
 }
 
 async Task<User> GetUserAsync(int id)
@@ -1429,33 +1467,81 @@ async Task<User> GetUserAsync(int id)
     string json = await client.GetStringAsync(url);
     
     // JSON을 객체로 변환
+    // Deserialize<T>는 제네릭 메서드로 타입 안전성 제공
     User user = JsonSerializer.Deserialize<User>(json);
     
+    // null 체크 (JSON이 올바르지 않거나 변환 실패 시)
+    if (user == null)
+    {
+        throw new InvalidOperationException("사용자 데이터를 파싱할 수 없습니다");
+    }
+    
+    Console.WriteLine($"ID: {user.Id}");
     Console.WriteLine($"이름: {user.Name}");
     Console.WriteLine($"이메일: {user.Email}");
+    Console.WriteLine($"생성일: {user.CreatedAt:yyyy-MM-dd}");
+    Console.WriteLine($"활성: {user.IsActive}");
     
     return user;
 }
 ```
 
-### JSON 직렬화 (Serialization)
+**JSON과 C# 타입 매핑:**
+
+| JSON 타입 | C# 타입 |
+|-----------|---------|
+| `null` | `null` |
+| `true`, `false` | `bool` |
+| 숫자 | `int`, `long`, `double`, `decimal` |
+| 문자열 | `string` |
+| 배열 | `List<T>`, `T[]`, `IEnumerable<T>` |
+| 객체 | `class`, `record`, `struct` |
+
+```json
+{
+  "id": 123,
+  "name": "홍길동",
+  "email": "hong@example.com",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "isActive": true,
+  "tags": ["developer", "admin"],
+  "metadata": {
+    "lastLogin": "2024-11-15T07:00:00Z"
+  }
+}
+```
+
+### JSON 직렬화 (Serialization) - C# 객체 → JSON
+
+직렬화는 C# 객체를 JSON 문자열로 변환하는 과정입니다:
 
 ```csharp
 async Task CreateUserAsync()
 {
     using HttpClient client = new HttpClient();
     
+    // C# 객체 생성
     var newUser = new User
     {
         Name = "이영희",
-        Email = "lee@example.com"
+        Email = "lee@example.com",
+        CreatedAt = DateTime.UtcNow,
+        IsActive = true
     };
     
     // 객체를 JSON으로 변환
+    // Serialize는 객체의 public 속성을 JSON으로 변환
     string json = JsonSerializer.Serialize(newUser);
     
-    StringContent content = new StringContent(json,
-        System.Text.Encoding.UTF8, "application/json");
+    // 결과 JSON (한 줄로 압축됨):
+    // {"Id":0,"Name":"이영희","Email":"lee@example.com","CreatedAt":"2024-11-15T07:00:00Z","IsActive":true}
+    
+    Console.WriteLine($"직렬화된 JSON: {json}");
+    
+    // HTTP 요청 본문으로 사용
+    var content = new StringContent(json,
+        System.Text.Encoding.UTF8, 
+        "application/json");
     
     HttpResponseMessage response = await client.PostAsync(
         "https://api.example.com/users",
@@ -1471,7 +1557,9 @@ async Task CreateUserAsync()
 }
 ```
 
-### JsonSerializerOptions 사용
+### JsonSerializerOptions - 세밀한 제어
+
+`JsonSerializerOptions`는 직렬화/역직렬화 동작을 제어합니다:
 
 ```csharp
 async Task<User> GetUserWithOptionsAsync(int id)
@@ -1482,50 +1570,361 @@ async Task<User> GetUserWithOptionsAsync(int id)
         $"https://api.example.com/users/{id}"
     );
     
-    // JSON 파싱 옵션 설정
+    // 옵션 설정
     var options = new JsonSerializerOptions
     {
-        PropertyNameCaseInsensitive = true,  // 대소문자 구분 안함
-        WriteIndented = true  // 보기 좋게 포맷팅
+        // 1. 속성 이름 대소문자 구분 안함
+        // API: "Name" ↔ C#: "name" 자동 매칭
+        PropertyNameCaseInsensitive = true,
+        
+        // 2. 들여쓰기로 보기 좋게 포맷팅 (디버깅용)
+        WriteIndented = true,
+        
+        // 3. 속성 이름을 camelCase로 (C#: PascalCase → JSON: camelCase)
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        
+        // 4. null 값을 가진 속성 무시
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        
+        // 5. 읽기 전용 속성 포함 (get만 있는 속성)
+        IncludeFields = false,
+        
+        // 6. 숫자를 문자열로 읽기 허용
+        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+        
+        // 7. 주석 허용 (표준 JSON은 주석 미지원)
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        
+        // 8. 트레일링 쉼표 허용 (표준 JSON은 불허)
+        AllowTrailingCommas = true,
+        
+        // 9. 최대 깊이 (순환 참조 방지)
+        MaxDepth = 64
     };
     
     User user = JsonSerializer.Deserialize<User>(json, options);
+    
+    // 직렬화 시에도 동일한 옵션 사용
+    string serialized = JsonSerializer.Serialize(user, options);
+    Console.WriteLine(serialized);
+    
     return user;
 }
 ```
 
-### 복잡한 JSON 구조 처리
+**옵션 재사용과 성능:**
 
 ```csharp
-class ApiResponse
+// ✅ 좋은 예: 옵션을 static readonly로 재사용
+public class ApiClient
+{
+    private static readonly JsonSerializerOptions DefaultOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+    
+    public async Task<T> GetAsync<T>(string url)
+    {
+        string json = await httpClient.GetStringAsync(url);
+        return JsonSerializer.Deserialize<T>(json, DefaultOptions);
+    }
+}
+```
+
+### 복잡한 JSON 구조와 중첩 객체
+
+실제 API는 중첩된 복잡한 JSON을 반환합니다:
+
+```csharp
+// API 응답 래퍼 패턴
+class ApiResponse<T>
 {
     public bool Success { get; set; }
     public string Message { get; set; }
-    public UserData Data { get; set; }
+    public T Data { get; set; }
+    public ErrorInfo Error { get; set; }
+    public PaginationInfo Pagination { get; set; }
+}
+
+class ErrorInfo
+{
+    public string Code { get; set; }
+    public string Message { get; set; }
+    public Dictionary<string, string[]> ValidationErrors { get; set; }
+}
+
+class PaginationInfo
+{
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages { get; set; }
+    public int TotalItems { get; set; }
 }
 
 class UserData
 {
     public int Id { get; set; }
     public string Name { get; set; }
+    public string Email { get; set; }
     public List<string> Tags { get; set; }
+    public Address Address { get; set; }
+    public List<Order> RecentOrders { get; set; }
 }
 
-async Task<ApiResponse> GetComplexDataAsync()
+class Address
+{
+    public string Street { get; set; }
+    public string City { get; set; }
+    public string ZipCode { get; set; }
+}
+
+class Order
+{
+    public int OrderId { get; set; }
+    public decimal Total { get; set; }
+    public DateTime OrderDate { get; set; }
+}
+
+async Task<UserData> GetComplexDataAsync()
 {
     using HttpClient client = new HttpClient();
     
-    string json = await client.GetStringAsync("https://api.example.com/data");
+    string json = await client.GetStringAsync("https://api.example.com/users/123");
     
-    ApiResponse response = JsonSerializer.Deserialize<ApiResponse>(json);
+    // 복잡한 JSON을 중첩 객체로 파싱
+    var response = JsonSerializer.Deserialize<ApiResponse<UserData>>(json);
     
-    if (response.Success)
+    if (!response.Success)
     {
-        Console.WriteLine($"사용자: {response.Data.Name}");
-        Console.WriteLine($"태그: {string.Join(", ", response.Data.Tags)}");
+        Console.WriteLine($"오류: {response.Error.Code} - {response.Error.Message}");
+        
+        // 검증 오류 출력
+        if (response.Error.ValidationErrors != null)
+        {
+            foreach (var (field, errors) in response.Error.ValidationErrors)
+            {
+                Console.WriteLine($"  {field}: {string.Join(", ", errors)}");
+            }
+        }
+        
+        return null;
     }
     
-    return response;
+    var user = response.Data;
+    Console.WriteLine($"사용자: {user.Name} ({user.Email})");
+    Console.WriteLine($"주소: {user.Address.City}, {user.Address.Street}");
+    Console.WriteLine($"태그: {string.Join(", ", user.Tags)}");
+    
+    Console.WriteLine($"\n최근 주문:");
+    foreach (var order in user.RecentOrders)
+    {
+        Console.WriteLine($"  주문 #{order.OrderId}: {order.Total:C} ({order.OrderDate:yyyy-MM-dd})");
+    }
+    
+    // 페이지네이션 정보
+    if (response.Pagination != null)
+    {
+        Console.WriteLine($"\n페이지 {response.Pagination.Page}/{response.Pagination.TotalPages}");
+    }
+    
+    return user;
+}
+```
+
+### 속성 이름 변환 - JsonPropertyName 특성
+
+API의 JSON 속성 이름과 C# 명명 규칙이 다를 때 매핑합니다:
+
+```csharp
+using System.Text.Json.Serialization;
+
+class GitHubUser
+{
+    // JSON: "login" ↔ C#: "Username"
+    [JsonPropertyName("login")]
+    public string Username { get; set; }
+    
+    // JSON: "avatar_url" ↔ C#: "AvatarUrl"
+    [JsonPropertyName("avatar_url")]
+    public string AvatarUrl { get; set; }
+    
+    // JSON: "public_repos" ↔ C#: "PublicRepositories"
+    [JsonPropertyName("public_repos")]
+    public int PublicRepositories { get; set; }
+    
+    // JSON: "created_at" ↔ C#: "CreatedAt"
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+    
+    // 속성 무시
+    [JsonIgnore]
+    public string InternalNote { get; set; }
+    
+    // 읽기만 허용 (역직렬화만, 직렬화 제외)
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int CalculatedScore { get; set; }
+}
+
+// GitHub API 사용 예
+async Task<GitHubUser> GetGitHubUserAsync(string username)
+{
+    using var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("User-Agent", "MyApp");
+    
+    string json = await client.GetStringAsync($"https://api.github.com/users/{username}");
+    
+    var user = JsonSerializer.Deserialize<GitHubUser>(json);
+    
+    Console.WriteLine($"사용자: {user.Username}");
+    Console.WriteLine($"저장소: {user.PublicRepositories}개");
+    Console.WriteLine($"가입일: {user.CreatedAt:yyyy-MM-dd}");
+    
+    return user;
+}
+```
+
+### 동적 JSON과 JsonDocument
+
+타입이 미리 정의되지 않은 JSON을 처리할 때는 `JsonDocument`를 사용합니다:
+
+```csharp
+async Task ParseDynamicJsonAsync()
+{
+    using var client = new HttpClient();
+    string json = await client.GetStringAsync("https://api.example.com/dynamic-data");
+    
+    // JsonDocument는 읽기 전용 DOM (Document Object Model)
+    using JsonDocument document = JsonDocument.Parse(json);
+    
+    // 루트 요소 접근
+    JsonElement root = document.RootElement;
+    
+    // 속성 존재 확인 및 접근
+    if (root.TryGetProperty("users", out JsonElement usersElement))
+    {
+        // 배열 순회
+        foreach (JsonElement userElement in usersElement.EnumerateArray())
+        {
+            string name = userElement.GetProperty("name").GetString();
+            int age = userElement.GetProperty("age").GetInt32();
+            
+            Console.WriteLine($"{name} ({age}세)");
+            
+            // 선택적 속성
+            if (userElement.TryGetProperty("email", out JsonElement emailElement))
+            {
+                Console.WriteLine($"  이메일: {emailElement.GetString()}");
+            }
+        }
+    }
+    
+    // 중첩 객체 탐색
+    if (root.TryGetProperty("metadata", out JsonElement metadata))
+    {
+        if (metadata.TryGetProperty("timestamp", out JsonElement timestamp))
+        {
+            DateTime dt = timestamp.GetDateTime();
+            Console.WriteLine($"타임스탬프: {dt}");
+        }
+    }
+}
+```
+
+### 스트리밍 JSON 파싱 - Utf8JsonReader
+
+대용량 JSON을 메모리 효율적으로 파싱합니다:
+
+```csharp
+async Task ParseLargeJsonAsync()
+{
+    using var client = new HttpClient();
+    using var stream = await client.GetStreamAsync("https://api.example.com/large-data");
+    
+    // UTF-8 바이트를 직접 읽어 제로 할당 파싱
+    byte[] buffer = new byte[4096];
+    int bytesRead = await stream.ReadAsync(buffer);
+    
+    var reader = new Utf8JsonReader(buffer.AsSpan(0, bytesRead));
+    
+    string currentProperty = null;
+    
+    while (reader.Read())
+    {
+        switch (reader.TokenType)
+        {
+            case JsonTokenType.PropertyName:
+                currentProperty = reader.GetString();
+                break;
+                
+            case JsonTokenType.String:
+                if (currentProperty == "name")
+                {
+                    string value = reader.GetString();
+                    Console.WriteLine($"이름: {value}");
+                }
+                break;
+                
+            case JsonTokenType.Number:
+                if (currentProperty == "age")
+                {
+                    int value = reader.GetInt32();
+                    Console.WriteLine($"나이: {value}");
+                }
+                break;
+        }
+    }
+}
+```
+
+### JSON 검증과 오류 처리
+
+```csharp
+async Task<User> SafeDeserializeAsync(string url)
+{
+    using var client = new HttpClient();
+    
+    try
+    {
+        string json = await client.GetStringAsync(url);
+        
+        // 옵션으로 엄격한 검증
+        var options = new JsonSerializerOptions
+        {
+            AllowTrailingCommas = false,  // 트레일링 쉼표 불허
+            ReadCommentHandling = JsonCommentHandling.Disallow,  // 주석 불허
+            MaxDepth = 32  // 깊이 제한
+        };
+        
+        User user = JsonSerializer.Deserialize<User>(json, options);
+        
+        // 수동 검증
+        if (string.IsNullOrWhiteSpace(user.Name))
+        {
+            throw new InvalidDataException("사용자 이름이 유효하지 않습니다");
+        }
+        
+        if (!user.Email.Contains("@"))
+        {
+            throw new InvalidDataException("이메일 형식이 올바르지 않습니다");
+        }
+        
+        return user;
+    }
+    catch (JsonException ex)
+    {
+        // JSON 파싱 오류
+        Console.WriteLine($"JSON 파싱 실패: {ex.Message}");
+        Console.WriteLine($"위치: Line {ex.LineNumber}, Position {ex.BytePositionInLine}");
+        throw;
+    }
+    catch (NotSupportedException ex)
+    {
+        // 지원되지 않는 JSON 구조
+        Console.WriteLine($"지원되지 않는 JSON: {ex.Message}");
+        throw;
+    }
 }
 ```
 
@@ -1533,226 +1932,709 @@ async Task<ApiResponse> GetComplexDataAsync()
 
 ## 22.5 실제 공개 API와 연동하기
 
-실제 공개 API를 사용하여 데이터를 받아오고 처리하는 실습 예제입니다.
+실제 공개 API와의 통합은 이론을 실전으로 전환하는 결정적 단계입니다. 이 절에서는 GitHub, JSONPlaceholder, OpenWeatherMap 등 실제 서비스의 API를 사용하여, **인증(Authentication)**, **Rate Limiting**, **오류 처리(Error Handling)**, **페이지네이션(Pagination)** 등 실무에서 마주하는 다양한 상황을 경험합니다.
 
-### GitHub API 사용 예제
+**공개 API 선택 시 고려사항:**
+
+1. **인증 요구사항**: API Key, OAuth 2.0, Bearer Token 등
+2. **Rate Limit**: 요청 횟수 제한 (예: 60 requests/hour)
+3. **문서화 품질**: API 엔드포인트, 파라미터, 응답 형식 명세
+4. **안정성**: SLA (Service Level Agreement), 가용성
+5. **비용**: 무료 tier, 유료 플랜, 초과 요금
+6. **CORS 정책**: 브라우저 환경에서의 제약사항
+
+### GitHub API - 버전 관리 시스템 데이터
+
+GitHub REST API v3는 GitHub의 데이터를 프로그래밍 방식으로 접근할 수 있게 합니다. 인증 없이도 시간당 60회 요청이 가능하며, 인증 시 5,000회로 증가합니다.
 
 ```csharp
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
+// GitHub API 응답을 위한 DTO
 class GitHubUser
 {
-    public string login { get; set; }
-    public int id { get; set; }
-    public string name { get; set; }
-    public string bio { get; set; }
-    public int public_repos { get; set; }
-    public int followers { get; set; }
+    [JsonPropertyName("login")]
+    public string Login { get; set; }
+    
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
+    
+    [JsonPropertyName("bio")]
+    public string Bio { get; set; }
+    
+    [JsonPropertyName("public_repos")]
+    public int PublicRepos { get; set; }
+    
+    [JsonPropertyName("followers")]
+    public int Followers { get; set; }
+    
+    [JsonPropertyName("following")]
+    public int Following { get; set; }
+    
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+    
+    [JsonPropertyName("updated_at")]
+    public DateTime UpdatedAt { get; set; }
+    
+    [JsonPropertyName("avatar_url")]
+    public string AvatarUrl { get; set; }
 }
 
-async Task GetGitHubUserInfoAsync(string username)
+class GitHubRepository
 {
-    using HttpClient client = new HttpClient();
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
     
-    // GitHub API는 User-Agent 헤더 필수
-    client.DefaultRequestHeaders.Add("User-Agent", "C# REST Client");
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
     
-    try
+    [JsonPropertyName("full_name")]
+    public string FullName { get; set; }
+    
+    [JsonPropertyName("description")]
+    public string Description { get; set; }
+    
+    [JsonPropertyName("stargazers_count")]
+    public int Stars { get; set; }
+    
+    [JsonPropertyName("forks_count")]
+    public int Forks { get; set; }
+    
+    [JsonPropertyName("language")]
+    public string Language { get; set; }
+    
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+}
+
+class GitHubApiClient
+{
+    private readonly HttpClient _client;
+    private readonly JsonSerializerOptions _jsonOptions;
+    
+    public GitHubApiClient(string userAgent = "C# REST API Client")
     {
-        string url = $"https://api.github.com/users/{username}";
-        string json = await client.GetStringAsync(url);
+        _client = new HttpClient
+        {
+            BaseAddress = new Uri("https://api.github.com/")
+        };
         
-        GitHubUser user = JsonSerializer.Deserialize<GitHubUser>(json);
+        // GitHub API는 User-Agent 헤더 필수
+        _client.DefaultRequestHeaders.Add("User-Agent", userAgent);
         
-        Console.WriteLine($"사용자명: {user.login}");
-        Console.WriteLine($"이름: {user.name ?? "없음"}");
-        Console.WriteLine($"소개: {user.bio ?? "없음"}");
-        Console.WriteLine($"공개 저장소: {user.public_repos}개");
-        Console.WriteLine($"팔로워: {user.followers}명");
+        // GitHub API v3 버전 지정 (선택적, 안정성 확보)
+        _client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+        
+        _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
     }
-    catch (HttpRequestException e)
+    
+    // 사용자 정보 조회
+    public async Task<GitHubUser> GetUserAsync(string username)
     {
-        Console.WriteLine($"GitHub API 오류: {e.Message}");
+        try
+        {
+            string json = await _client.GetStringAsync($"users/{username}");
+            return JsonSerializer.Deserialize<GitHubUser>(json, _jsonOptions);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            Console.WriteLine($"사용자 '{username}'을 찾을 수 없습니다.");
+            return null;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            Console.WriteLine("API Rate Limit 초과. 잠시 후 다시 시도하세요.");
+            return null;
+        }
+    }
+    
+    // 사용자의 저장소 목록 조회 (페이지네이션)
+    public async Task<List<GitHubRepository>> GetUserRepositoriesAsync(
+        string username, 
+        int page = 1, 
+        int perPage = 30)
+    {
+        try
+        {
+            // 쿼리 파라미터로 페이지네이션
+            string url = $"users/{username}/repos?page={page}&per_page={perPage}&sort=updated";
+            string json = await _client.GetStringAsync(url);
+            
+            return JsonSerializer.Deserialize<List<GitHubRepository>>(json, _jsonOptions);
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"저장소 조회 실패: {ex.Message}");
+            return new List<GitHubRepository>();
+        }
+    }
+    
+    // Rate Limit 정보 확인
+    public async Task CheckRateLimitAsync()
+    {
+        var response = await _client.GetAsync("rate_limit");
+        string json = await response.Content.ReadAsStringAsync();
+        
+        // Rate limit 헤더 확인
+        if (response.Headers.TryGetValues("X-RateLimit-Limit", out var limitValues))
+        {
+            Console.WriteLine($"시간당 허용 요청: {limitValues.First()}");
+        }
+        
+        if (response.Headers.TryGetValues("X-RateLimit-Remaining", out var remainingValues))
+        {
+            Console.WriteLine($"남은 요청: {remainingValues.First()}");
+        }
+        
+        if (response.Headers.TryGetValues("X-RateLimit-Reset", out var resetValues))
+        {
+            long resetUnix = long.Parse(resetValues.First());
+            DateTime resetTime = DateTimeOffset.FromUnixTimeSeconds(resetUnix).LocalDateTime;
+            Console.WriteLine($"리셋 시간: {resetTime}");
+        }
     }
 }
 
-// 사용
-await GetGitHubUserInfoAsync("octocat");
+// 사용 예제
+async Task DemoGitHubApiAsync()
+{
+    var github = new GitHubApiClient();
+    
+    // Rate Limit 확인
+    await github.CheckRateLimitAsync();
+    
+    // 사용자 정보 조회
+    var user = await github.GetUserAsync("torvalds");
+    if (user != null)
+    {
+        Console.WriteLine($"\n사용자: {user.Login}");
+        Console.WriteLine($"이름: {user.Name}");
+        Console.WriteLine($"Bio: {user.Bio}");
+        Console.WriteLine($"공개 저장소: {user.PublicRepos}개");
+        Console.WriteLine($"팔로워: {user.Followers}명");
+        Console.WriteLine($"가입일: {user.CreatedAt:yyyy-MM-dd}");
+    }
+    
+    // 저장소 목록 조회
+    var repos = await github.GetUserRepositoriesAsync("torvalds", page: 1, perPage: 5);
+    Console.WriteLine($"\n최근 업데이트된 저장소 (상위 {repos.Count}개):");
+    
+    foreach (var repo in repos)
+    {
+        Console.WriteLine($"\n  {repo.FullName}");
+        Console.WriteLine($"  설명: {repo.Description ?? "설명 없음"}");
+        Console.WriteLine($"  언어: {repo.Language ?? "N/A"}");
+        Console.WriteLine($"  ⭐ {repo.Stars} | 🍴 {repo.Forks}");
+    }
+}
 ```
 
-### JSONPlaceholder API 사용 예제
+### JSONPlaceholder - 테스트용 REST API
+
+JSONPlaceholder는 무료 테스트 API로, 프로토타이핑과 학습에 ideal합니다. 인증이 필요 없고, CRUD 작업을 모두 지원합니다 (실제 데이터는 변경되지 않음).
 
 ```csharp
 class Post
 {
-    public int userId { get; set; }
-    public int id { get; set; }
-    public string title { get; set; }
-    public string body { get; set; }
+    [JsonPropertyName("userId")]
+    public int UserId { get; set; }
+    
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    
+    [JsonPropertyName("title")]
+    public string Title { get; set; }
+    
+    [JsonPropertyName("body")]
+    public string Body { get; set; }
 }
 
-async Task GetPostsAsync()
+class Comment
 {
-    using HttpClient client = new HttpClient();
+    [JsonPropertyName("postId")]
+    public int PostId { get; set; }
     
-    string url = "https://jsonplaceholder.typicode.com/posts";
-    string json = await client.GetStringAsync(url);
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
     
-    List<Post> posts = JsonSerializer.Deserialize<List<Post>>(json);
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
     
-    Console.WriteLine($"총 {posts.Count}개의 게시물");
+    [JsonPropertyName("email")]
+    public string Email { get; set; }
     
-    // 처음 5개만 출력
-    foreach (var post in posts.Take(5))
+    [JsonPropertyName("body")]
+    public string Body { get; set; }
+}
+
+class JsonPlaceholderClient
+{
+    private readonly HttpClient _client;
+    private readonly JsonSerializerOptions _jsonOptions;
+    
+    public JsonPlaceholderClient()
     {
-        Console.WriteLine($"\n게시물 #{post.id}");
-        Console.WriteLine($"제목: {post.title}");
-        Console.WriteLine($"내용: {post.body.Substring(0, Math.Min(50, post.body.Length))}...");
+        _client = new HttpClient
+        {
+            BaseAddress = new Uri("https://jsonplaceholder.typicode.com/")
+        };
+        
+        _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true
+        };
+    }
+    
+    // 모든 게시물 조회
+    public async Task<List<Post>> GetAllPostsAsync()
+    {
+        string json = await _client.GetStringAsync("posts");
+        return JsonSerializer.Deserialize<List<Post>>(json, _jsonOptions);
+    }
+    
+    // 특정 게시물 조회
+    public async Task<Post> GetPostAsync(int id)
+    {
+        string json = await _client.GetStringAsync($"posts/{id}");
+        return JsonSerializer.Deserialize<Post>(json, _jsonOptions);
+    }
+    
+    // 게시물 생성 (실제로는 생성되지 않지만 201 Created 응답)
+    public async Task<Post> CreatePostAsync(Post newPost)
+    {
+        string jsonContent = JsonSerializer.Serialize(newPost, _jsonOptions);
+        var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+        
+        var response = await _client.PostAsync("posts", content);
+        response.EnsureSuccessStatusCode();
+        
+        string jsonResponse = await response.Content.ReadAsStringAsync();
+        var created = JsonSerializer.Deserialize<Post>(jsonResponse, _jsonOptions);
+        
+        Console.WriteLine($"게시물 생성됨: ID={created.Id}");
+        return created;
+    }
+    
+    // 게시물 수정
+    public async Task<Post> UpdatePostAsync(int id, Post updatedPost)
+    {
+        updatedPost.Id = id;  // ID 유지
+        
+        string jsonContent = JsonSerializer.Serialize(updatedPost, _jsonOptions);
+        var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+        
+        var response = await _client.PutAsync($"posts/{id}", content);
+        response.EnsureSuccessStatusCode();
+        
+        string jsonResponse = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<Post>(jsonResponse, _jsonOptions);
+    }
+    
+    // 게시물 부분 수정
+    public async Task<Post> PatchPostAsync(int id, object partialUpdate)
+    {
+        string jsonContent = JsonSerializer.Serialize(partialUpdate, _jsonOptions);
+        var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+        
+        var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"posts/{id}")
+        {
+            Content = content
+        };
+        
+        var response = await _client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        
+        string jsonResponse = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<Post>(jsonResponse, _jsonOptions);
+    }
+    
+    // 게시물 삭제
+    public async Task<bool> DeletePostAsync(int id)
+    {
+        var response = await _client.DeleteAsync($"posts/{id}");
+        return response.IsSuccessStatusCode;
+    }
+    
+    // 게시물의 댓글 조회
+    public async Task<List<Comment>> GetPostCommentsAsync(int postId)
+    {
+        string json = await _client.GetStringAsync($"posts/{postId}/comments");
+        return JsonSerializer.Deserialize<List<Comment>>(json, _jsonOptions);
     }
 }
 
-async Task CreatePostAsync()
+// CRUD 작업 데모
+async Task DemoJsonPlaceholderAsync()
 {
-    using HttpClient client = new HttpClient();
+    var client = new JsonPlaceholderClient();
     
+    // CREATE - 새 게시물 생성
+    Console.WriteLine("=== CREATE ===");
     var newPost = new Post
     {
-        userId = 1,
-        title = "새로운 게시물",
-        body = "C#에서 작성한 게시물입니다."
+        UserId = 1,
+        Title = "C#에서 REST API 호출하기",
+        Body = "HttpClient를 사용하여 REST API와 통신하는 방법을 학습했습니다."
     };
     
-    string json = JsonSerializer.Serialize(newPost);
-    StringContent content = new StringContent(json,
-        System.Text.Encoding.UTF8, "application/json");
+    var created = await client.CreatePostAsync(newPost);
+    Console.WriteLine($"생성된 게시물 ID: {created.Id}");
     
-    HttpResponseMessage response = await client.PostAsync(
-        "https://jsonplaceholder.typicode.com/posts",
-        content
-    );
+    // READ - 게시물 조회
+    Console.WriteLine("\n=== READ ===");
+    var post = await client.GetPostAsync(1);
+    Console.WriteLine($"제목: {post.Title}");
+    Console.WriteLine($"내용: {post.Body.Substring(0, Math.Min(50, post.Body.Length))}...");
     
-    if (response.IsSuccessStatusCode)
+    // UPDATE - 전체 수정
+    Console.WriteLine("\n=== UPDATE (PUT) ===");
+    post.Title = "수정된 제목";
+    post.Body = "수정된 내용입니다.";
+    var updated = await client.UpdatePostAsync(1, post);
+    Console.WriteLine($"수정됨: {updated.Title}");
+    
+    // PATCH - 부분 수정
+    Console.WriteLine("\n=== PATCH ===");
+    var patched = await client.PatchPostAsync(1, new { title = "부분 수정된 제목" });
+    Console.WriteLine($"부분 수정됨: {patched.Title}");
+    
+    // DELETE - 삭제
+    Console.WriteLine("\n=== DELETE ===");
+    bool deleted = await client.DeletePostAsync(1);
+    Console.WriteLine($"삭제 성공: {deleted}");
+    
+    // 댓글 조회
+    Console.WriteLine("\n=== Comments ===");
+    var comments = await client.GetPostCommentsAsync(1);
+    Console.WriteLine($"게시물 #1의 댓글 {comments.Count}개");
+    foreach (var comment in comments.Take(3))
     {
-        string result = await response.Content.ReadAsStringAsync();
-        Post created = JsonSerializer.Deserialize<Post>(result);
-        Console.WriteLine($"생성된 게시물 ID: {created.id}");
+        Console.WriteLine($"  - {comment.Name} ({comment.Email})");
+        Console.WriteLine($"    {comment.Body.Substring(0, Math.Min(60, comment.Body.Length))}...\n");
     }
 }
 ```
 
-### 날씨 API 사용 예제
+### 실전 REST API 클라이언트 - 재사용 가능한 추상화
+
+프로덕션급 API 클라이언트는 오류 처리, 재시도, 로깅 등을 포함해야 합니다:
 
 ```csharp
-class WeatherData
+class RestApiClient : IDisposable
 {
-    public string name { get; set; }
-    public Main main { get; set; }
-    public List<Weather> weather { get; set; }
-}
-
-class Main
-{
-    public double temp { get; set; }
-    public int humidity { get; set; }
-}
-
-class Weather
-{
-    public string description { get; set; }
-}
-
-async Task GetWeatherAsync(string city, string apiKey)
-{
-    using HttpClient client = new HttpClient();
+    private readonly HttpClient _client;
+    private readonly JsonSerializerOptions _jsonOptions;
+    private readonly string _baseUrl;
     
-    string url = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={apiKey}&units=metric&lang=kr";
-    
-    try
+    public RestApiClient(string baseUrl, string authToken = null)
     {
-        string json = await client.GetStringAsync(url);
-        WeatherData weather = JsonSerializer.Deserialize<WeatherData>(json);
-        
-        Console.WriteLine($"도시: {weather.name}");
-        Console.WriteLine($"온도: {weather.main.temp}°C");
-        Console.WriteLine($"습도: {weather.main.humidity}%");
-        Console.WriteLine($"날씨: {weather.weather[0].description}");
-    }
-    catch (HttpRequestException e)
-    {
-        Console.WriteLine($"날씨 정보를 가져올 수 없습니다: {e.Message}");
-    }
-}
-```
-
-### 실전 REST API 클라이언트 클래스
-
-```csharp
-class RestApiClient
-{
-    private readonly HttpClient client;
-    private readonly string baseUrl;
-    
-    public RestApiClient(string baseUrl)
-    {
-        this.baseUrl = baseUrl;
-        this.client = new HttpClient
+        _baseUrl = baseUrl;
+        _client = new HttpClient
         {
-            BaseAddress = new Uri(baseUrl)
+            BaseAddress = new Uri(baseUrl),
+            Timeout = TimeSpan.FromSeconds(30)
         };
         
         // 기본 헤더 설정
-        client.DefaultRequestHeaders.Add("User-Agent", "My REST Client");
+        _client.DefaultRequestHeaders.Add("User-Agent", "Advanced REST Client");
+        _client.DefaultRequestHeaders.Add("Accept", "application/json");
+        
+        // 인증 토큰이 있으면 추가
+        if (!string.IsNullOrEmpty(authToken))
+        {
+            _client.DefaultRequestHeaders.Authorization = 
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+        }
+        
+        _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
     }
     
+    // GET 요청
     public async Task<T> GetAsync<T>(string endpoint)
     {
-        string json = await client.GetStringAsync(endpoint);
-        return JsonSerializer.Deserialize<T>(json);
+        try
+        {
+            var response = await _client.GetAsync(endpoint);
+            await EnsureSuccessStatusCodeAsync(response);
+            
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<T>(json, _jsonOptions);
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"GET 요청 실패: {endpoint}");
+            Console.WriteLine($"오류: {ex.Message}");
+            throw;
+        }
     }
     
-    public async Task<T> PostAsync<T>(string endpoint, object data)
+    // POST 요청
+    public async Task<TResponse> PostAsync<TRequest, TResponse>(string endpoint, TRequest data)
     {
-        string json = JsonSerializer.Serialize(data);
-        StringContent content = new StringContent(json,
-            System.Text.Encoding.UTF8, "application/json");
-        
-        HttpResponseMessage response = await client.PostAsync(endpoint, content);
-        response.EnsureSuccessStatusCode();
-        
-        string result = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<T>(result);
+        try
+        {
+            string json = JsonSerializer.Serialize(data, _jsonOptions);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            var response = await _client.PostAsync(endpoint, content);
+            await EnsureSuccessStatusCodeAsync(response);
+            
+            string responseJson = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TResponse>(responseJson, _jsonOptions);
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"POST 요청 실패: {endpoint}");
+            Console.WriteLine($"오류: {ex.Message}");
+            throw;
+        }
     }
     
+    // PUT 요청
+    public async Task<TResponse> PutAsync<TRequest, TResponse>(string endpoint, TRequest data)
+    {
+        try
+        {
+            string json = JsonSerializer.Serialize(data, _jsonOptions);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            var response = await _client.PutAsync(endpoint, content);
+            await EnsureSuccessStatusCodeAsync(response);
+            
+            string responseJson = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TResponse>(responseJson, _jsonOptions);
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"PUT 요청 실패: {endpoint}");
+            Console.WriteLine($"오류: {ex.Message}");
+            throw;
+        }
+    }
+    
+    // DELETE 요청
     public async Task<bool> DeleteAsync(string endpoint)
     {
-        HttpResponseMessage response = await client.DeleteAsync(endpoint);
-        return response.IsSuccessStatusCode;
+        try
+        {
+            var response = await _client.DeleteAsync(endpoint);
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"DELETE 요청 실패: {endpoint}");
+            Console.WriteLine($"오류: {ex.Message}");
+            return false;
+        }
+    }
+    
+    // 오류 응답 처리
+    private async Task EnsureSuccessStatusCodeAsync(HttpResponseMessage response)
+    {
+        if (response.IsSuccessStatusCode)
+            return;
+        
+        string errorContent = await response.Content.ReadAsStringAsync();
+        
+        throw new HttpRequestException(
+            $"HTTP {(int)response.StatusCode} {response.StatusCode}\n" +
+            $"응답: {errorContent}",
+            null,
+            response.StatusCode);
+    }
+    
+    public void Dispose()
+    {
+        _client?.Dispose();
     }
 }
 
-// 사용 예
-var apiClient = new RestApiClient("https://api.example.com");
-var user = await apiClient.GetAsync<User>("/users/1");
-var newUser = await apiClient.PostAsync<User>("/users", new { name = "홍길동" });
+// 사용 예제
+async Task DemoRestApiClientAsync()
+{
+    using var client = new RestApiClient("https://jsonplaceholder.typicode.com");
+    
+    // GET
+    var post = await client.GetAsync<Post>("/posts/1");
+    Console.WriteLine($"조회: {post.Title}");
+    
+    // POST
+    var newPost = new Post
+    {
+        UserId = 1,
+        Title = "New Post",
+        Body = "Content"
+    };
+    var created = await client.PostAsync<Post, Post>("/posts", newPost);
+    Console.WriteLine($"생성: ID={created.Id}");
+    
+    // PUT
+    created.Title = "Updated Title";
+    var updated = await client.PutAsync<Post, Post>($"/posts/{created.Id}", created);
+    Console.WriteLine($"수정: {updated.Title}");
+    
+    // DELETE
+    bool deleted = await client.DeleteAsync($"/posts/{created.Id}");
+    Console.WriteLine($"삭제: {deleted}");
+}
 ```
 
 ---
 
-## 22장 정리
+## 22장 정리 및 요약
 
-이 장에서는 C#에서 REST API 클라이언트를 작성하는 기본 방법을 학습했습니다:
+이 장에서는 C#에서 REST API 클라이언트를 작성하는 포괄적인 방법을 학습했습니다. REST 아키텍처의 역사적 맥락부터 실전 코드까지, 현대 분산 시스템 개발의 핵심 기술을 습득했습니다.
 
-- **HttpClient**: HTTP 요청을 보내기 위한 기본 클래스
-- **GET 요청**: 서버에서 데이터를 조회하는 방법
-- **POST 요청**: 서버에 데이터를 전송하는 방법  
-- **JSON 처리**: `System.Text.Json`을 사용한 직렬화/역직렬화
-- **실제 API 연동**: GitHub, JSONPlaceholder 등 공개 API 활용
+### 핵심 개념의 재조명
 
-REST API는 현대 웹 개발의 필수 요소이며, 이 장에서 배운 기초를 바탕으로 다양한 웹 서비스와 통신하는 애플리케이션을 만들 수 있습니다.
+**1. REST 아키텍처의 본질:**
 
-### 다음 단계
+Roy Fielding이 2000년에 제안한 REST는 단순한 API 설계 방법이 아니라, 웹의 확장성을 극대화하기 위한 **아키텍처 스타일**입니다. 6가지 제약 조건(무상태성, 캐시 가능성, 계층화된 시스템 등)을 통해 분산 시스템의 복잡도를 관리하고, HTTP 프로토콜의 본래 의도를 충실히 따릅니다.
 
-- API 인증 (API Key, OAuth)
-- 에러 처리 및 재시도 로직
-- HttpClientFactory 패턴
-- Polly 라이브러리를 사용한 복원력 있는 HTTP 요청
+REST는 SOAP의 복잡성에 대한 반발로 대중화되었으며, 2010년대 모바일 혁명과 클라우드 컴퓨팅의 부상으로 사실상의 표준이 되었습니다. 오늘날 마이크로서비스 아키텍처의 핵심 통신 메커니즘이며, Netflix, Amazon, Google 등 대규모 서비스의 기반입니다.
+
+**2. HttpClient의 설계 철학과 함정:**
+
+`HttpClient`는 .NET 4.5에서 도입된 현대적인 HTTP 클라이언트로, 비동기 우선, 재사용 가능, 확장 가능한 설계를 따릅니다. 그러나 잘못 사용하면 **소켓 고갈(Socket Exhaustion)**과 **DNS 캐싱** 문제를 야기할 수 있습니다.
+
+핵심 원칙:
+- ✅ **싱글톤 패턴**: `HttpClient`를 애플리케이션 생명주기 동안 재사용
+- ✅ **HttpClientFactory**: .NET Core 2.1+에서 소켓 관리와 DNS 갱신 자동화
+- ❌ **안티패턴**: 요청마다 새로운 `HttpClient` 생성 (TIME_WAIT 상태 누적)
+- ❌ **동기 차단**: `.Result`나 `.Wait()` 사용 (데드락 위험)
+
+**3. HTTP 메서드의 의미론과 실무 적용:**
+
+HTTP 메서드는 단순한 CRUD 매핑이 아니라, **안전성(Safety)**과 **멱등성(Idempotency)**이라는 수학적 속성을 가집니다:
+
+- **GET**: 안전하고 멱등적 → 자동 재시도 가능, 캐싱 가능
+- **POST**: 안전하지 않고 비멱등적 → 중복 요청 주의, 리소스 생성
+- **PUT**: 비안전하지만 멱등적 → 전체 교체, 여러 번 호출해도 안전
+- **PATCH**: 비안전하고 비멱등적 → 부분 수정, RFC 5789 표준
+- **DELETE**: 비안전하지만 멱등적 → 삭제, 이미 삭제된 것 재삭제 가능
+
+이러한 의미론은 네트워크 장애, 재시도 로직, 캐싱 전략의 기반이 되며, RESTful API 설계의 핵심입니다.
+
+**4. JSON의 진화와 System.Text.Json:**
+
+JSON은 2001년 Douglas Crockford가 XML의 복잡성에 대한 대안으로 제안했으며, 현재 REST API의 사실상 표준 데이터 형식입니다. C#의 JSON 라이브러리는 다음과 같이 진화했습니다:
+
+- **초기**: `JavaScriptSerializer`, `DataContractJsonSerializer` - 느리고 제한적
+- **중기**: Newtonsoft.Json (Json.NET) - 기능 풍부, 널리 사용됨
+- **현대**: `System.Text.Json` - 고성능, 제로 할당, 보안 우선
+
+`System.Text.Json`은 Span<T>와 Memory<T>를 활용한 **제로 할당 파싱**, Utf8JsonReader의 **직접 UTF-8 파싱**, 그리고 기본적으로 안전한 설정(깊이 제한, 순환 참조 방지)으로 성능과 보안을 동시에 달성합니다.
+
+**5. 실전 API 통합의 도전과제:**
+
+실제 API와의 통합에서 마주하는 도전:
+
+- **인증과 권한**: API Key, OAuth 2.0, JWT 토큰 관리
+- **Rate Limiting**: 요청 한도 준수, 429 Too Many Requests 처리
+- **오류 처리**: 일시적 오류 vs 영구적 오류, 재시도 전략
+- **페이지네이션**: Offset-based, Cursor-based, Link headers
+- **버전 관리**: URI 버전 vs Header 버전 vs Media Type 버전
+- **타임아웃**: 적절한 타임아웃 설정, 부분 응답 처리
+- **CORS**: 브라우저 환경에서의 Cross-Origin 제약
+
+### 실무에서의 모범 사례
+
+**1. 복원력 있는 HTTP 통신 (Resilient HTTP):**
+
+```csharp
+// Polly를 사용한 재시도와 Circuit Breaker
+services.AddHttpClient("ResilientApi")
+    .AddTransientHttpErrorPolicy(p => 
+        p.WaitAndRetryAsync(3, retryAttempt => 
+            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))))
+    .AddTransientHttpErrorPolicy(p =>
+        p.CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)));
+```
+
+**2. 구조화된 로깅:**
+
+```csharp
+// HTTP 요청/응답 로깅
+services.AddHttpClient("LoggedApi")
+    .AddLogger<ConsoleLoggingHandler>();
+```
+
+**3. 테스트 가능한 설계:**
+
+```csharp
+// HttpClient를 인터페이스로 추상화
+public interface IApiClient
+{
+    Task<T> GetAsync<T>(string endpoint);
+}
+
+// 테스트에서 Mock 사용
+var mockClient = new Mock<IApiClient>();
+mockClient.Setup(x => x.GetAsync<User>("/users/1"))
+    .ReturnsAsync(new User { Id = 1, Name = "Test" });
+```
+
+### 다음 단계와 심화 학습
+
+이 장에서 다룬 기초를 바탕으로 다음 주제로 확장할 수 있습니다:
+
+**고급 인증:**
+- **OAuth 2.0 Flow**: Authorization Code, Refresh Token, PKCE
+- **OpenID Connect**: 신원 확인과 SSO (Single Sign-On)
+- **JWT (JSON Web Tokens)**: Claims 기반 인증, 토큰 검증
+
+**성능 최적화:**
+- **HTTP/2 멀티플렉싱**: 단일 연결에서 여러 요청 동시 처리
+- **HTTP/3 (QUIC)**: UDP 기반 프로토콜, 더 낮은 지연 시간
+- **Connection Pooling**: SocketsHttpHandler의 내부 최적화
+- **압축**: Gzip, Brotli 압축 활용
+
+**복원력 패턴 (Resilience Patterns):**
+- **Polly 라이브러리**: 재시도, Circuit Breaker, Bulkhead, Timeout
+- **지수 백오프(Exponential Backoff)**: 재시도 간격 점진적 증가
+- **Jitter**: 재시도 타이밍에 무작위성 추가로 thundering herd 방지
+
+**관찰 가능성 (Observability):**
+- **분산 추적(Distributed Tracing)**: OpenTelemetry, Jaeger
+- **메트릭(Metrics)**: Prometheus, Grafana
+- **구조화된 로깅(Structured Logging)**: Serilog, ELK Stack
+
+**API 설계 원칙:**
+- **Richardson Maturity Model**: Level 0-3의 REST 성숙도
+- **HATEOAS**: Hypermedia As The Engine Of Application State
+- **API 버저닝**: 하위 호환성 유지 전략
+- **GraphQL**: REST의 대안, 정확한 데이터 요청
+
+### 권장 리소스
+
+**공식 문서:**
+- Microsoft: "HttpClient guidelines for .NET"
+- RFC 7230-7235: HTTP/1.1 명세
+- RFC 7231: HTTP Semantics and Content
+- RFC 6902: JSON Patch
+
+**도서:**
+- "RESTful Web APIs" by Leonard Richardson & Mike Amundsen
+- "Building Microservices" by Sam Newman
+- "Web API Design" by Arnaud Lauret
+
+**온라인 리소스:**
+- GitHub REST API v3 Documentation
+- JSONPlaceholder (https://jsonplaceholder.typicode.com/)
+- Public APIs List (https://github.com/public-apis/public-apis)
+
+REST API 클라이언트 개발은 현대 소프트웨어 엔지니어링의 필수 기술입니다. 이 장에서 학습한 원칙과 패턴은 마이크로서비스, 클라우드 네이티브 애플리케이션, 모바일 앱 개발 등 다양한 분야에 적용됩니다. 이론적 기반과 실무 경험을 결합하여, 견고하고 확장 가능한 분산 시스템을 구축할 수 있습니다!
