@@ -877,58 +877,188 @@ byte[] partial = await DownloadRangeAsync(
 
 ## 22.3 POST 요청으로 데이터 전송하기
 
-POST 요청은 서버에 데이터를 전송하여 새로운 리소스를 생성하거나 작업을 수행할 때 사용합니다.
+POST 메서드는 HTTP에서 **리소스를 생성(Create)**하거나 **작업을 수행(Action)**하는 용도로 사용됩니다. GET과 달리 POST는 **안전하지 않으며(Not Safe)** **멱등하지 않습니다(Not Idempotent)**. 동일한 POST 요청을 여러 번 수행하면 여러 개의 리소스가 생성되거나 여러 번 작업이 실행될 수 있습니다.
 
-### 문자열 데이터 전송
+**POST vs PUT vs PATCH의 의미론적 차이:**
+
+REST 설계에서 리소스 조작 메서드의 선택은 매우 중요합니다:
+
+```
+POST   /users          → 새 사용자 생성 (ID는 서버가 할당)
+                         비멱등적: 여러 번 호출 시 여러 사용자 생성
+
+PUT    /users/123      → 사용자 123을 전체 교체 (없으면 생성)
+                         멱등적: 여러 번 호출해도 결과 동일
+
+PATCH  /users/123      → 사용자 123의 일부 속성만 수정
+                         비멱등적 (구현에 따라 다름)
+
+DELETE /users/123      → 사용자 123 삭제
+                         멱등적: 이미 삭제된 것 다시 삭제해도 동일
+```
+
+**POST의 실무 사용 사례:**
+
+1. **리소스 생성**: `/api/orders` - 새 주문 생성
+2. **컨트롤러 액션**: `/api/orders/123/cancel` - 주문 취소 (RPC 스타일)
+3. **검색 (복잡한 쿼리)**: `/api/search` - GET으로는 표현하기 어려운 복잡한 검색
+4. **배치 작업**: `/api/users/batch` - 여러 사용자를 한 번에 처리
+5. **파일 업로드**: `/api/files` - 멀티파트 폼 데이터 전송
+
+**HTTP 요청 본문의 구조:**
+
+POST 요청은 요청 본문(Request Body)에 데이터를 포함합니다. 본문의 형식은 `Content-Type` 헤더로 지정됩니다:
+
+```
+POST /api/users HTTP/1.1
+Host: api.example.com
+Content-Type: application/json          ← 미디어 타입 지정
+Content-Length: 45                      ← 본문 크기 (bytes)
+Authorization: Bearer eyJhbGc...        ← 인증 토큰 (선택적)
+
+{"name":"홍길동","age":30}                ← 실제 데이터
+```
+
+**주요 Content-Type:**
+
+- `application/json`: JSON 데이터 (RESTful API의 표준)
+- `application/x-www-form-urlencoded`: HTML 폼 데이터 (URL 인코딩)
+- `multipart/form-data`: 파일 업로드와 폼 데이터 혼합
+- `application/xml`: XML 데이터 (레거시 시스템)
+- `text/plain`: 일반 텍스트
+- `application/octet-stream`: 바이너리 데이터
+
+### JSON 데이터 전송 - StringContent 사용
+
+JSON은 REST API에서 사실상의 표준 데이터 형식입니다:
 
 ```csharp
-async Task PostStringDataAsync()
+async Task PostJsonDataAsync()
 {
     using HttpClient client = new HttpClient();
     
-    string url = "https://api.example.com/data";
-    string jsonData = "{\"name\":\"홍길동\",\"age\":30}";
+    string url = "https://api.example.com/users";
     
+    // JSON 문자열 직접 작성
+    string jsonData = "{\"name\":\"홍길동\",\"age\":30,\"email\":\"hong@example.com\"}";
+    
+    // StringContent로 HTTP 본문 생성
+    // 인코딩과 Content-Type을 명시적으로 지정
     StringContent content = new StringContent(
         jsonData,
-        System.Text.Encoding.UTF8,
-        "application/json"
+        System.Text.Encoding.UTF8,  // UTF-8 인코딩 (JSON 표준)
+        "application/json"           // MIME 타입
     );
     
     try
     {
+        // POST 요청 전송
         HttpResponseMessage response = await client.PostAsync(url, content);
+        
+        // 응답 상태 확인
+        Console.WriteLine($"상태 코드: {response.StatusCode}");
+        Console.WriteLine($"성공 여부: {response.IsSuccessStatusCode}");
         
         if (response.IsSuccessStatusCode)
         {
+            // 201 Created: 새 리소스 생성 성공
+            // Location 헤더에 새 리소스의 URI가 포함될 수 있음
+            if (response.Headers.Location != null)
+            {
+                Console.WriteLine($"생성된 리소스 위치: {response.Headers.Location}");
+            }
+            
             string result = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"응답: {result}");
+            Console.WriteLine($"응답 본문: {result}");
         }
         else
         {
-            Console.WriteLine($"실패: {response.StatusCode}");
+            // 오류 응답 본문 확인 (API 오류 메시지 포함)
+            string errorContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"오류: {response.StatusCode}");
+            Console.WriteLine($"오류 내용: {errorContent}");
         }
     }
-    catch (Exception e)
+    catch (HttpRequestException e)
     {
-        Console.WriteLine($"오류: {e.Message}");
+        Console.WriteLine($"HTTP 오류: {e.Message}");
+        if (e.InnerException != null)
+        {
+            Console.WriteLine($"내부 예외: {e.InnerException.Message}");
+        }
+    }
+    catch (TaskCanceledException)
+    {
+        Console.WriteLine("요청 시간 초과 (Timeout)");
     }
 }
 ```
 
-### FormUrlEncodedContent 사용
+**HTTP 응답 본문의 의미:**
+
+POST 요청 후 서버는 다양한 응답을 반환할 수 있습니다:
+
+```csharp
+// 일반적인 POST 응답 패턴
+async Task<(bool Success, string ResourceId, string ErrorMessage)> CreateResourceAsync()
+{
+    var response = await client.PostAsync(url, content);
+    
+    switch (response.StatusCode)
+    {
+        case HttpStatusCode.Created:  // 201
+            // 리소스 생성 성공
+            // Location 헤더에서 새 리소스 URI 추출
+            string location = response.Headers.Location?.ToString();
+            string resourceId = location?.Split('/').Last();
+            return (true, resourceId, null);
+            
+        case HttpStatusCode.OK:  // 200
+            // 작업 성공 (리소스 생성은 아닐 수 있음)
+            return (true, null, null);
+            
+        case HttpStatusCode.Accepted:  // 202
+            // 요청 수락, 비동기 처리 중
+            // 응답 본문에 작업 상태 확인 URI가 포함될 수 있음
+            return (true, null, "비동기 처리 중");
+            
+        case HttpStatusCode.BadRequest:  // 400
+            // 잘못된 요청 (유효성 검증 실패)
+            string validationError = await response.Content.ReadAsStringAsync();
+            return (false, null, validationError);
+            
+        case HttpStatusCode.Conflict:  // 409
+            // 충돌 (예: 중복 생성 시도)
+            return (false, null, "리소스가 이미 존재합니다");
+            
+        default:
+            string error = await response.Content.ReadAsStringAsync();
+            return (false, null, $"{response.StatusCode}: {error}");
+    }
+}
+```
+
+### FormUrlEncodedContent - HTML 폼 데이터 전송
+
+HTML 폼 데이터 형식은 웹 폼의 기본 인코딩 방식입니다:
 
 ```csharp
 async Task PostFormDataAsync()
 {
     using HttpClient client = new HttpClient();
     
+    // Key-Value 쌍으로 폼 데이터 구성
     var formData = new Dictionary<string, string>
     {
         { "username", "user123" },
-        { "email", "user@example.com" }
+        { "email", "user@example.com" },
+        { "password", "SecurePassword123!" },
+        { "accept_terms", "true" }
     };
     
+    // FormUrlEncodedContent는 자동으로:
+    // 1. URL 인코딩 적용 (특수 문자 → %XX)
+    // 2. Content-Type을 application/x-www-form-urlencoded로 설정
     FormUrlEncodedContent content = new FormUrlEncodedContent(formData);
     
     HttpResponseMessage response = await client.PostAsync(
@@ -936,41 +1066,339 @@ async Task PostFormDataAsync()
         content
     );
     
-    string result = await response.Content.ReadAsStringAsync();
-    Console.WriteLine(result);
+    // 전송되는 실제 본문 형식:
+    // username=user123&email=user%40example.com&password=SecurePassword123!&accept_terms=true
+    
+    if (response.IsSuccessStatusCode)
+    {
+        string result = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"등록 성공: {result}");
+    }
+    else
+    {
+        Console.WriteLine($"등록 실패: {response.StatusCode}");
+    }
 }
 ```
 
-### PUT, DELETE 요청
+**폼 데이터 vs JSON:**
+
+| 특성 | application/x-www-form-urlencoded | application/json |
+|------|-----------------------------------|------------------|
+| 구조 | 평면 Key-Value | 계층적, 중첩 가능 |
+| 배열 | 어려움 | 간단함 |
+| 타입 정보 | 없음 (모두 문자열) | 있음 (숫자, 불리언 등) |
+| 사용 사례 | HTML 폼, OAuth | REST API, 복잡한 데이터 |
+| 가독성 | 낮음 | 높음 |
+
+### MultipartFormDataContent - 파일 업로드
+
+파일과 폼 데이터를 함께 전송할 때 사용합니다:
 
 ```csharp
-// PUT 요청 - 데이터 수정
-async Task UpdateDataAsync(int id)
+async Task UploadFileWithMetadataAsync(string filePath)
 {
-    using HttpClient client = new HttpClient();
+    using var client = new HttpClient();
+    using var content = new MultipartFormDataContent();
     
-    string jsonData = "{\"name\":\"김철수\",\"age\":25}";
-    StringContent content = new StringContent(jsonData, 
-        System.Text.Encoding.UTF8, "application/json");
+    // 1. 파일 추가
+    byte[] fileBytes = await File.ReadAllBytesAsync(filePath);
+    var fileContent = new ByteArrayContent(fileBytes);
+    fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
     
-    HttpResponseMessage response = await client.PutAsync(
-        $"https://api.example.com/users/{id}",
-        content
-    );
+    // 파일 이름 지정
+    content.Add(fileContent, "file", Path.GetFileName(filePath));
     
-    Console.WriteLine($"수정 결과: {response.StatusCode}");
+    // 2. 메타데이터 추가 (폼 필드)
+    content.Add(new StringContent("My Image"), "title");
+    content.Add(new StringContent("A beautiful sunset"), "description");
+    content.Add(new StringContent("public"), "visibility");
+    
+    // 3. POST 요청
+    var response = await client.PostAsync("https://api.example.com/upload", content);
+    
+    if (response.IsSuccessStatusCode)
+    {
+        string result = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"업로드 성공: {result}");
+    }
+    else
+    {
+        Console.WriteLine($"업로드 실패: {response.StatusCode}");
+    }
 }
 
-// DELETE 요청 - 데이터 삭제
-async Task DeleteDataAsync(int id)
+// 스트림을 사용한 대용량 파일 업로드
+async Task UploadLargeFileAsync(string filePath)
+{
+    using var client = new HttpClient();
+    using var content = new MultipartFormDataContent();
+    
+    // 파일을 스트림으로 읽어 메모리 효율적으로 업로드
+    using var fileStream = File.OpenRead(filePath);
+    var streamContent = new StreamContent(fileStream);
+    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+    
+    content.Add(streamContent, "file", Path.GetFileName(filePath));
+    
+    // 진행률 추적을 위한 커스텀 핸들러 사용 가능
+    var response = await client.PostAsync("https://api.example.com/upload", content);
+    
+    Console.WriteLine($"업로드 결과: {response.StatusCode}");
+}
+```
+
+**Multipart 본문의 구조:**
+
+```
+POST /upload HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="image.jpg"
+Content-Type: image/jpeg
+
+[바이너리 이미지 데이터]
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+My Image
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="description"
+
+A beautiful sunset
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+```
+
+### PUT 요청 - 리소스 전체 교체
+
+PUT은 **리소스 전체를 교체(Replace)**하는 멱등적 작업입니다:
+
+```csharp
+// PUT의 의미론: 리소스의 모든 속성을 교체
+async Task UpdateUserAsync(int userId, User updatedUser)
 {
     using HttpClient client = new HttpClient();
     
-    HttpResponseMessage response = await client.DeleteAsync(
-        $"https://api.example.com/users/{id}"
+    // 사용자 객체를 JSON으로 직렬화
+    string jsonData = JsonSerializer.Serialize(updatedUser);
+    
+    var content = new StringContent(
+        jsonData,
+        System.Text.Encoding.UTF8,
+        "application/json"
     );
     
-    Console.WriteLine($"삭제 결과: {response.StatusCode}");
+    // PUT은 리소스 ID를 URL에 포함
+    string url = $"https://api.example.com/users/{userId}";
+    HttpResponseMessage response = await client.PutAsync(url, content);
+    
+    if (response.StatusCode == HttpStatusCode.OK)  // 200
+    {
+        Console.WriteLine("사용자 정보 수정 성공");
+    }
+    else if (response.StatusCode == HttpStatusCode.NoContent)  // 204
+    {
+        Console.WriteLine("사용자 정보 수정 성공 (응답 본문 없음)");
+    }
+    else if (response.StatusCode == HttpStatusCode.NotFound)  // 404
+    {
+        Console.WriteLine("사용자를 찾을 수 없습니다");
+    }
+    else
+    {
+        string error = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"수정 실패: {response.StatusCode} - {error}");
+    }
+}
+```
+
+**PUT의 멱등성:**
+
+```csharp
+// 동일한 PUT을 여러 번 수행해도 결과는 같음
+await client.PutAsync("/users/123", content);  // 첫 호출
+await client.PutAsync("/users/123", content);  // 두 번째 호출 - 결과 동일
+await client.PutAsync("/users/123", content);  // 세 번째 호출 - 결과 동일
+```
+
+### PATCH 요청 - 리소스 부분 수정
+
+PATCH는 **리소스의 일부만 수정(Partial Update)**합니다. RFC 5789에서 정의되었습니다:
+
+```csharp
+async Task PartialUpdateUserAsync(int userId)
+{
+    using HttpClient client = new HttpClient();
+    
+    // JSON Patch 형식 (RFC 6902)
+    string patchData = @"
+    [
+        { ""op"": ""replace"", ""path"": ""/email"", ""value"": ""new@example.com"" },
+        { ""op"": ""add"", ""path"": ""/phone"", ""value"": ""010-1234-5678"" },
+        { ""op"": ""remove"", ""path"": ""/temporary_field"" }
+    ]";
+    
+    var content = new StringContent(
+        patchData,
+        System.Text.Encoding.UTF8,
+        "application/json-patch+json"  // JSON Patch의 미디어 타입
+    );
+    
+    // PATCH 메서드 사용
+    var request = new HttpRequestMessage(new HttpMethod("PATCH"), 
+        $"https://api.example.com/users/{userId}");
+    request.Content = content;
+    
+    var response = await client.SendAsync(request);
+    
+    if (response.IsSuccessStatusCode)
+    {
+        Console.WriteLine("부분 수정 성공");
+    }
+}
+
+// 간단한 PATCH (단순 JSON 사용)
+async Task SimplePatchAsync(int userId)
+{
+    using var client = new HttpClient();
+    
+    // 수정할 필드만 포함
+    var patchData = new
+    {
+        email = "new@example.com",
+        phone = "010-1234-5678"
+    };
+    
+    string json = JsonSerializer.Serialize(patchData);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+    
+    var request = new HttpRequestMessage(new HttpMethod("PATCH"), 
+        $"https://api.example.com/users/{userId}");
+    request.Content = content;
+    
+    var response = await client.SendAsync(request);
+    Console.WriteLine($"PATCH 결과: {response.StatusCode}");
+}
+```
+
+### DELETE 요청 - 리소스 삭제
+
+DELETE는 **리소스를 삭제(Remove)**하는 멱등적 작업입니다:
+
+```csharp
+async Task DeleteResourceAsync(int userId)
+{
+    using HttpClient client = new HttpClient();
+    
+    string url = $"https://api.example.com/users/{userId}";
+    HttpResponseMessage response = await client.DeleteAsync(url);
+    
+    switch (response.StatusCode)
+    {
+        case HttpStatusCode.OK:  // 200
+            // 삭제 성공, 삭제된 리소스 정보 반환
+            string deletedResource = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"삭제됨: {deletedResource}");
+            break;
+            
+        case HttpStatusCode.NoContent:  // 204
+            // 삭제 성공, 응답 본문 없음 (가장 일반적)
+            Console.WriteLine("리소스 삭제 성공");
+            break;
+            
+        case HttpStatusCode.NotFound:  // 404
+            // 리소스가 존재하지 않음
+            // 멱등성 때문에 이미 삭제된 경우도 성공으로 간주 가능
+            Console.WriteLine("리소스가 존재하지 않음 (이미 삭제됨?)");
+            break;
+            
+        case HttpStatusCode.Conflict:  // 409
+            // 삭제 불가 (예: 다른 리소스가 참조 중)
+            string conflictMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"삭제 불가: {conflictMessage}");
+            break;
+            
+        default:
+            Console.WriteLine($"삭제 실패: {response.StatusCode}");
+            break;
+    }
+}
+```
+
+**DELETE의 멱등성과 비즈니스 로직:**
+
+```csharp
+// 멱등적 DELETE: 여러 번 호출해도 안전
+await client.DeleteAsync("/users/123");  // 첫 호출 - 삭제됨
+await client.DeleteAsync("/users/123");  // 두 번째 호출 - 404 또는 204 (안전함)
+
+// 소프트 삭제(Soft Delete) 구현
+async Task SoftDeleteAsync(int userId)
+{
+    // DELETE 대신 PATCH로 is_deleted 플래그 설정
+    var patchData = new { is_deleted = true, deleted_at = DateTime.UtcNow };
+    string json = JsonSerializer.Serialize(patchData);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+    
+    var request = new HttpRequestMessage(new HttpMethod("PATCH"), 
+        $"https://api.example.com/users/{userId}");
+    request.Content = content;
+    
+    var response = await client.SendAsync(request);
+    Console.WriteLine($"소프트 삭제: {response.StatusCode}");
+}
+```
+
+### 인증 헤더 추가 - Bearer Token
+
+대부분의 REST API는 인증을 요구합니다:
+
+```csharp
+async Task AuthenticatedRequestAsync(string token)
+{
+    using var client = new HttpClient();
+    
+    // Authorization 헤더에 Bearer 토큰 추가
+    client.DefaultRequestHeaders.Authorization = 
+        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+    
+    // 또는 직접 헤더 추가
+    // client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+    
+    var userData = new { name = "홍길동", email = "hong@example.com" };
+    string json = JsonSerializer.Serialize(userData);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+    
+    var response = await client.PostAsync("https://api.example.com/users", content);
+    
+    if (response.StatusCode == HttpStatusCode.Unauthorized)  // 401
+    {
+        Console.WriteLine("인증 실패: 토큰이 유효하지 않습니다");
+    }
+    else if (response.StatusCode == HttpStatusCode.Forbidden)  // 403
+    {
+        Console.WriteLine("권한 없음: 이 작업을 수행할 권한이 없습니다");
+    }
+    else if (response.IsSuccessStatusCode)
+    {
+        Console.WriteLine("요청 성공");
+    }
+}
+
+// API Key 인증
+async Task ApiKeyRequestAsync(string apiKey)
+{
+    using var client = new HttpClient();
+    
+    // 커스텀 헤더로 API Key 전송
+    client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+    
+    // 또는 쿼리 파라미터로 전송 (보안상 권장하지 않음)
+    // string url = $"https://api.example.com/data?api_key={apiKey}";
+    
+    var response = await client.GetAsync("https://api.example.com/data");
+    Console.WriteLine($"API Key 인증: {response.StatusCode}");
 }
 ```
 
