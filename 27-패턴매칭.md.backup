@@ -1,0 +1,967 @@
+# 27장. 패턴 매칭
+
+패턴 매칭(Pattern Matching)은 C# 7.0부터 단계적으로 도입되어 C# 10과 C# 11에서 대폭 강화된 기능으로, 데이터의 구조와 값을 검사하고 분해하는 강력한 방법을 제공합니다. 전통적인 타입 검사와 캐스팅을 간결하고 안전하게 표현할 수 있으며, 함수형 프로그래밍의 패턴 매칭 개념을 C#에 도입한 혁신적인 기능입니다.
+
+**패턴 매칭의 핵심 개념:**
+
+패턴 매칭은 값이 특정 "패턴"과 일치하는지 확인하고, 일치할 경우 필요한 정보를 추출하는 과정입니다. 이는 F#, Haskell, Rust와 같은 함수형 언어에서 널리 사용되는 개념으로, 복잡한 조건 분기를 선언적이고 간결하게 표현할 수 있게 해줍니다.
+
+**패턴 매칭이 사용되는 주요 위치:**
+- `is` 표현식: 타입 및 값 검사
+- `switch` 문과 `switch` 식: 다중 분기 처리
+- 변수 선언: 구조 분해(destructuring)
+
+**C#의 패턴 매칭 진화:**
+- **C# 7.0 (2017)**: 기본 패턴 매칭 도입 (`is` 패턴, `switch` 케이스 패턴)
+- **C# 8.0 (2019)**: Switch 식, 속성 패턴, 위치 패턴, 튜플 패턴
+- **C# 9.0 (2020)**: 관계 패턴, 논리 패턴 (`and`, `or`, `not`)
+- **C# 10 (2021)**: 확장 속성 패턴
+- **C# 11 (2022)**: 리스트 패턴, 슬라이스 패턴
+
+## 이 장에서 배울 내용
+
+이 장을 통해 독자 여러분은 C#의 패턴 매칭 기능을 체계적으로 학습하게 됩니다:
+
+- **타입 패턴**: 객체의 타입을 검사하고 안전하게 캐스팅하는 방법
+- **속성 패턴**: 객체의 속성 값을 검사하여 복잡한 조건을 간결하게 표현하는 방법
+- **위치 패턴**: 튜플이나 레코드의 요소를 위치 기반으로 분해하고 검사하는 방법
+- **관계 패턴**: 숫자 범위와 크기 비교를 직관적으로 표현하는 방법
+- **논리 패턴**: 여러 패턴을 조합하여 복잡한 조건을 구성하는 방법
+
+---
+
+## 27.1 타입 패턴
+
+타입 패턴(Type Pattern)은 객체의 타입을 검사하고, 해당 타입으로 안전하게 캐스팅하는 패턴입니다. 전통적인 `is` 연산자와 명시적 캐스팅을 결합한 작업을 한 번에 수행할 수 있어, 코드가 간결해지고 null 안정성이 향상됩니다.
+
+**전통적인 방식의 문제점:**
+
+```csharp
+// C# 6 이전: 타입 검사와 캐스팅 분리
+object obj = "Hello, World!";
+
+if (obj is string)
+{
+    string text = (string)obj;  // 명시적 캐스팅 필요
+    Console.WriteLine($"문자열 길이: {text.Length}");
+}
+```
+
+이 방식은 다음과 같은 단점이 있습니다:
+- 타입 검사와 캐스팅이 분리되어 코드 중복 발생
+- 임시 변수 선언이 필요
+- 같은 객체를 두 번 언급 (obj → string)
+
+**타입 패턴의 해결책:**
+
+```csharp
+// C# 7.0+: 타입 패턴 사용
+object obj = "Hello, World!";
+
+if (obj is string text)  // 검사와 동시에 변수 선언
+{
+    Console.WriteLine($"문자열 길이: {text.Length}");  // text는 string 타입
+}
+// text는 if 블록 외부에서 사용 불가
+```
+
+**타입 패턴의 주요 특징:**
+- **타입 검사 + 캐스팅 + 변수 선언**을 한 번에 수행
+- 패턴이 일치할 때만 새 변수가 할당됨 (null 안전)
+- 패턴 변수의 스코프는 패턴이 일치하는 블록으로 제한
+
+**switch 문에서의 타입 패턴:**
+
+```csharp
+object data = 42;
+
+switch (data)
+{
+    case int number:
+        Console.WriteLine($"정수: {number}");
+        break;
+    case string text:
+        Console.WriteLine($"문자열: {text}");
+        break;
+    case bool flag:
+        Console.WriteLine($"불린: {flag}");
+        break;
+    case null:
+        Console.WriteLine("null 값");
+        break;
+    default:
+        Console.WriteLine("알 수 없는 타입");
+        break;
+}
+// 출력: 정수: 42
+```
+
+**switch 식에서의 타입 패턴 (C# 8.0+):**
+
+Switch 식은 더욱 간결한 표현을 제공하며, 표현식의 결과값을 반환합니다.
+
+```csharp
+object data = "Hello";
+
+string result = data switch
+{
+    int number => $"정수: {number}",
+    string text => $"문자열: {text}",
+    bool flag => $"불린: {flag}",
+    null => "null 값",
+    _ => "알 수 없는 타입"  // 와일드카드 패턴
+};
+
+Console.WriteLine(result);  // 출력: 문자열: Hello
+```
+
+**실전 예제: 다형성 처리:**
+
+```csharp
+// 도형 클래스 계층
+abstract class Shape { }
+class Circle : Shape 
+{ 
+    public double Radius { get; set; } 
+}
+class Rectangle : Shape 
+{ 
+    public double Width { get; set; }
+    public double Height { get; set; }
+}
+class Triangle : Shape 
+{ 
+    public double Base { get; set; }
+    public double Height { get; set; }
+}
+
+// 전통적인 방식
+double GetAreaOld(Shape shape)
+{
+    if (shape is Circle)
+    {
+        Circle circle = (Circle)shape;
+        return Math.PI * circle.Radius * circle.Radius;
+    }
+    else if (shape is Rectangle)
+    {
+        Rectangle rect = (Rectangle)shape;
+        return rect.Width * rect.Height;
+    }
+    else if (shape is Triangle)
+    {
+        Triangle tri = (Triangle)shape;
+        return tri.Base * tri.Height / 2;
+    }
+    return 0;
+}
+
+// 타입 패턴 사용 (간결하고 안전)
+double GetArea(Shape shape)
+{
+    return shape switch
+    {
+        Circle c => Math.PI * c.Radius * c.Radius,
+        Rectangle r => r.Width * r.Height,
+        Triangle t => t.Base * t.Height / 2,
+        _ => 0
+    };
+}
+
+// 사용
+Shape myShape = new Circle { Radius = 5 };
+Console.WriteLine($"넓이: {GetArea(myShape)}");  // 넓이: 78.53981633974483
+```
+
+**when 절을 사용한 가드(Guard) 조건:**
+
+타입 패턴에 추가 조건을 결합할 수 있습니다.
+
+```csharp
+object obj = 42;
+
+string result = obj switch
+{
+    int n when n > 0 => "양수",
+    int n when n < 0 => "음수",
+    int => "0",
+    string s when s.Length > 0 => "비어있지 않은 문자열",
+    string => "빈 문자열",
+    _ => "기타"
+};
+
+Console.WriteLine(result);  // 출력: 양수
+```
+
+**var 패턴:**
+
+타입에 관계없이 모든 값을 캡처하는 패턴입니다.
+
+```csharp
+object obj = "anything";
+
+if (obj is var value)  // 항상 true, 타입 관계없이 value에 할당
+{
+    Console.WriteLine($"값: {value}, 타입: {value.GetType()}");
+}
+// 출력: 값: anything, 타입: System.String
+```
+
+**discard 패턴 (`_`):**
+
+값 자체는 필요 없고 타입만 확인하고 싶을 때 사용합니다.
+
+```csharp
+object obj = 123;
+
+if (obj is int _)  // int 타입인지만 확인, 값은 사용 안 함
+{
+    Console.WriteLine("정수입니다.");
+}
+```
+
+---
+
+## 27.2 속성 패턴
+
+속성 패턴(Property Pattern)은 객체의 속성 값을 검사하여 패턴 매칭을 수행합니다. 이는 객체의 상태를 기반으로 복잡한 조건 분기를 작성할 때 매우 유용하며, 중첩된 속성 접근도 간결하게 표현할 수 있습니다.
+
+**기본 속성 패턴:**
+
+```csharp
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public string City { get; set; }
+}
+
+Person person = new Person { Name = "김철수", Age = 30, City = "서울" };
+
+// 속성 값 검사
+if (person is { Age: 30 })
+{
+    Console.WriteLine("30세입니다.");
+}
+
+// 여러 속성 검사
+if (person is { Age: 30, City: "서울" })
+{
+    Console.WriteLine("30세이며 서울에 거주합니다.");
+}
+```
+
+**switch 식에서의 속성 패턴:**
+
+```csharp
+string GetDiscount(Person person) => person switch
+{
+    { Age: < 18 } => "청소년 할인 20%",
+    { Age: >= 65 } => "경로 할인 30%",
+    { City: "서울" } => "서울 시민 할인 10%",
+    _ => "일반 가격"
+};
+
+var p1 = new Person { Name = "학생", Age = 15, City = "부산" };
+var p2 = new Person { Name = "어르신", Age = 70, City = "대전" };
+var p3 = new Person { Name = "시민", Age = 35, City = "서울" };
+
+Console.WriteLine(GetDiscount(p1));  // 청소년 할인 20%
+Console.WriteLine(GetDiscount(p2));  // 경로 할인 30%
+Console.WriteLine(GetDiscount(p3));  // 서울 시민 할인 10%
+```
+
+**중첩 속성 패턴:**
+
+깊이 중첩된 속성에 대해서도 패턴 매칭이 가능합니다.
+
+```csharp
+public class Address
+{
+    public string City { get; set; }
+    public string ZipCode { get; set; }
+}
+
+public class Customer
+{
+    public string Name { get; set; }
+    public Address Address { get; set; }
+}
+
+Customer customer = new Customer 
+{ 
+    Name = "홍길동",
+    Address = new Address { City = "서울", ZipCode = "12345" }
+};
+
+// 중첩 속성 접근
+if (customer is { Address: { City: "서울" } })
+{
+    Console.WriteLine("서울 거주 고객입니다.");
+}
+
+// switch 식에서 중첩 속성
+string GetShippingInfo(Customer customer) => customer switch
+{
+    { Address: { City: "서울" } } => "당일 배송 가능",
+    { Address: { City: "부산" } } => "1일 배송",
+    { Address: null } => "주소 정보 없음",
+    _ => "2-3일 배송"
+};
+
+Console.WriteLine(GetShippingInfo(customer));  // 당일 배송 가능
+```
+
+**확장 속성 패턴 (C# 10+):**
+
+C# 10부터는 중첩 속성을 더 간결하게 표현할 수 있습니다.
+
+```csharp
+// C# 9 방식 (중첩된 중괄호)
+if (customer is { Address: { City: "서울" } }) { }
+
+// C# 10+ 방식 (점 표기법)
+if (customer is { Address.City: "서울" }) { }
+
+// switch 식에서도 동일
+string GetInfo(Customer c) => c switch
+{
+    { Address.City: "서울", Address.ZipCode: "12345" } => "강남구",
+    { Address.City: "부산" } => "부산 지역",
+    _ => "기타"
+};
+```
+
+**실전 예제: 주문 상태 처리:**
+
+```csharp
+public enum OrderStatus { Pending, Processing, Shipped, Delivered, Cancelled }
+
+public class Order
+{
+    public int Id { get; set; }
+    public OrderStatus Status { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime OrderDate { get; set; }
+}
+
+string GetOrderMessage(Order order) => order switch
+{
+    { Status: OrderStatus.Pending, Amount: > 100000 } 
+        => "고액 주문 대기 중 - 관리자 승인 필요",
+    
+    { Status: OrderStatus.Pending } 
+        => "주문 대기 중",
+    
+    { Status: OrderStatus.Processing, Amount: > 50000 } 
+        => "고액 주문 처리 중",
+    
+    { Status: OrderStatus.Shipped } 
+        => "배송 중",
+    
+    { Status: OrderStatus.Delivered } 
+        => "배송 완료",
+    
+    { Status: OrderStatus.Cancelled } 
+        => "주문 취소됨",
+    
+    _ => "알 수 없는 상태"
+};
+
+var order1 = new Order { Id = 1, Status = OrderStatus.Pending, Amount = 150000 };
+var order2 = new Order { Id = 2, Status = OrderStatus.Shipped, Amount = 30000 };
+
+Console.WriteLine(GetOrderMessage(order1));  // 고액 주문 대기 중 - 관리자 승인 필요
+Console.WriteLine(GetOrderMessage(order2));  // 배송 중
+```
+
+**속성 패턴과 타입 패턴 결합:**
+
+```csharp
+object data = new Person { Name = "이영희", Age = 25, City = "대전" };
+
+string result = data switch
+{
+    Person { Age: < 20, City: "서울" } p => $"{p.Name} - 서울의 청소년",
+    Person { Age: >= 60 } p => $"{p.Name} - 경로 우대",
+    Person { City: "서울" } p => $"{p.Name} - 서울 시민",
+    Person p => $"{p.Name} - 일반",
+    _ => "사람이 아님"
+};
+
+Console.WriteLine(result);  // 이영희 - 일반
+```
+
+---
+
+## 27.3 위치 패턴
+
+위치 패턴(Positional Pattern)은 객체를 위치 기반으로 분해(deconstruct)하여 패턴 매칭을 수행합니다. 주로 튜플(Tuple), 레코드(Record), 그리고 `Deconstruct` 메서드를 제공하는 타입에서 사용됩니다.
+
+**튜플 패턴:**
+
+```csharp
+// 튜플 생성
+var point = (X: 10, Y: 20);
+
+// 위치 패턴으로 분해
+if (point is (10, 20))
+{
+    Console.WriteLine("점이 (10, 20)입니다.");
+}
+
+// 변수로 캡처
+if (point is (var x, var y))
+{
+    Console.WriteLine($"X: {x}, Y: {y}");
+}
+
+// 특정 위치만 검사
+if (point is (10, _))  // Y 값은 무시
+{
+    Console.WriteLine("X가 10입니다.");
+}
+```
+
+**switch 식에서의 튜플 패턴:**
+
+```csharp
+var coordinates = (X: 5, Y: 0);
+
+string GetQuadrant((int X, int Y) point) => point switch
+{
+    (0, 0) => "원점",
+    (> 0, > 0) => "1사분면",
+    (< 0, > 0) => "2사분면",
+    (< 0, < 0) => "3사분면",
+    (> 0, < 0) => "4사분면",
+    (0, _) => "X축",
+    (_, 0) => "Y축"
+};
+
+Console.WriteLine(GetQuadrant(coordinates));  // Y축
+Console.WriteLine(GetQuadrant((3, 4)));       // 1사분면
+Console.WriteLine(GetQuadrant((-2, 5)));      // 2사분면
+```
+
+**레코드와 위치 패턴:**
+
+레코드 타입은 위치 패턴을 자연스럽게 지원합니다.
+
+```csharp
+// 레코드 정의
+public record Point(int X, int Y);
+public record Person(string Name, int Age, string City);
+
+// 위치 패턴 사용
+Point point = new Point(10, 20);
+
+if (point is (10, 20))
+{
+    Console.WriteLine("점이 (10, 20)입니다.");
+}
+
+// switch 식에서 사용
+string Describe(Point p) => p switch
+{
+    (0, 0) => "원점",
+    (var x, 0) => $"X축 위의 점 (X={x})",
+    (0, var y) => $"Y축 위의 점 (Y={y})",
+    (var x, var y) when x == y => $"y=x 직선 위의 점 ({x}, {y})",
+    (var x, var y) => $"일반 점 ({x}, {y})"
+};
+
+Console.WriteLine(Describe(new Point(0, 0)));   // 원점
+Console.WriteLine(Describe(new Point(5, 0)));   // X축 위의 점 (X=5)
+Console.WriteLine(Describe(new Point(0, 10)));  // Y축 위의 점 (Y=10)
+Console.WriteLine(Describe(new Point(7, 7)));   // y=x 직선 위의 점 (7, 7)
+```
+
+**클래스에 Deconstruct 메서드 구현:**
+
+사용자 정의 클래스에 `Deconstruct` 메서드를 추가하면 위치 패턴을 사용할 수 있습니다.
+
+```csharp
+public class Rectangle
+{
+    public int Width { get; set; }
+    public int Height { get; set; }
+
+    // Deconstruct 메서드 정의
+    public void Deconstruct(out int width, out int height)
+    {
+        width = Width;
+        height = Height;
+    }
+}
+
+Rectangle rect = new Rectangle { Width = 10, Height = 20 };
+
+// 위치 패턴 사용 가능
+if (rect is (10, 20))
+{
+    Console.WriteLine("10x20 직사각형입니다.");
+}
+
+// 변수로 캡처
+if (rect is (var w, var h))
+{
+    Console.WriteLine($"넓이: {w * h}");
+}
+
+// switch 식
+string ClassifyRectangle(Rectangle r) => r switch
+{
+    (var w, var h) when w == h => "정사각형",
+    (var w, var h) when w > h => "가로로 긴 직사각형",
+    (var w, var h) when w < h => "세로로 긴 직사각형",
+    _ => "알 수 없음"
+};
+
+Console.WriteLine(ClassifyRectangle(rect));  // 세로로 긴 직사각형
+```
+
+**복잡한 중첩 구조 분해:**
+
+```csharp
+public record Address(string City, string ZipCode);
+public record Person(string Name, int Age, Address Address);
+
+Person person = new Person("홍길동", 30, new Address("서울", "12345"));
+
+// 중첩된 위치 패턴
+string GetInfo(Person p) => p switch
+{
+    ("홍길동", _, ("서울", _)) => "홍길동님(서울)",
+    (var name, < 20, _) => $"{name}님(청소년)",
+    (var name, >= 60, _) => $"{name}님(경로)",
+    (var name, _, (var city, _)) => $"{name}님({city})",
+    _ => "알 수 없음"
+};
+
+Console.WriteLine(GetInfo(person));  // 홍길동님(서울)
+```
+
+**실전 예제: 가위바위보 게임:**
+
+```csharp
+enum Hand { Rock, Paper, Scissors }
+
+string DetermineWinner((Hand player1, Hand player2) game) => game switch
+{
+    (Hand.Rock, Hand.Scissors) => "플레이어 1 승리",
+    (Hand.Paper, Hand.Rock) => "플레이어 1 승리",
+    (Hand.Scissors, Hand.Paper) => "플레이어 1 승리",
+    (Hand.Scissors, Hand.Rock) => "플레이어 2 승리",
+    (Hand.Rock, Hand.Paper) => "플레이어 2 승리",
+    (Hand.Paper, Hand.Scissors) => "플레이어 2 승리",
+    (var h1, var h2) when h1 == h2 => "무승부",
+    _ => "오류"
+};
+
+Console.WriteLine(DetermineWinner((Hand.Rock, Hand.Scissors)));  // 플레이어 1 승리
+Console.WriteLine(DetermineWinner((Hand.Paper, Hand.Paper)));    // 무승부
+```
+
+---
+
+## 27.4 관계 패턴
+
+관계 패턴(Relational Pattern)은 C# 9.0에서 도입된 기능으로, 값의 크기를 비교하는 패턴입니다. `<`, `<=`, `>`, `>=` 연산자를 사용하여 숫자 범위와 경계 조건을 직관적으로 표현할 수 있습니다.
+
+**기본 관계 패턴:**
+
+```csharp
+int score = 85;
+
+// 전통적인 방식
+if (score >= 90)
+{
+    Console.WriteLine("A학점");
+}
+
+// 관계 패턴 사용
+string grade = score switch
+{
+    >= 90 => "A학점",
+    >= 80 => "B학점",
+    >= 70 => "C학점",
+    >= 60 => "D학점",
+    _ => "F학점"
+};
+
+Console.WriteLine(grade);  // B학점
+```
+
+**관계 패턴의 장점:**
+- 코드가 더 선언적이고 읽기 쉬움
+- 범위 검사를 명확하게 표현
+- switch 식에서 간결한 다중 조건 분기
+
+**숫자 범위 분류:**
+
+```csharp
+int GetAgeGroup(int age) => age switch
+{
+    < 0 => throw new ArgumentException("나이는 음수일 수 없습니다."),
+    < 13 => 1,  // 어린이
+    < 20 => 2,  // 청소년
+    < 60 => 3,  // 성인
+    _ => 4      // 노년
+};
+
+string GetAgeGroupName(int age) => age switch
+{
+    < 13 => "어린이",
+    < 20 => "청소년",
+    < 60 => "성인",
+    >= 60 => "노년",
+    _ => "알 수 없음"
+};
+
+Console.WriteLine(GetAgeGroupName(15));  // 청소년
+Console.WriteLine(GetAgeGroupName(45));  // 성인
+Console.WriteLine(GetAgeGroupName(70));  // 노년
+```
+
+**온도 분류 예제:**
+
+```csharp
+string ClassifyTemperature(double celsius) => celsius switch
+{
+    < -273.15 => "불가능한 온도 (절대 영도 이하)",
+    < 0 => "영하",
+    0 => "어는점",
+    > 0 and < 100 => "일반 온도",
+    100 => "끓는점",
+    > 100 => "끓는점 이상",
+    _ => "알 수 없음"
+};
+
+Console.WriteLine(ClassifyTemperature(-10));   // 영하
+Console.WriteLine(ClassifyTemperature(25));    // 일반 온도
+Console.WriteLine(ClassifyTemperature(100));   // 끓는점
+```
+
+**속성 패턴과 관계 패턴 결합:**
+
+```csharp
+public record Product(string Name, decimal Price, int Stock);
+
+string GetStockStatus(Product product) => product switch
+{
+    { Stock: 0 } => "품절",
+    { Stock: < 10 } => "재고 부족",
+    { Stock: < 50 } => "재고 보통",
+    { Stock: >= 50 } => "재고 충분",
+    _ => "알 수 없음"
+};
+
+string GetPriceCategory(Product product) => product switch
+{
+    { Price: < 10000 } => "저가",
+    { Price: >= 10000 and < 50000 } => "중가",
+    { Price: >= 50000 } => "고가",
+    _ => "알 수 없음"
+};
+
+var product1 = new Product("노트북", 1200000, 5);
+var product2 = new Product("마우스", 15000, 100);
+
+Console.WriteLine($"{product1.Name}: {GetStockStatus(product1)}, {GetPriceCategory(product1)}");
+// 출력: 노트북: 재고 부족, 고가
+
+Console.WriteLine($"{product2.Name}: {GetStockStatus(product2)}, {GetPriceCategory(product2)}");
+// 출력: 마우스: 재고 충분, 중가
+```
+
+**실전 예제: BMI 계산 및 분류:**
+
+```csharp
+public record Person(string Name, double HeightCm, double WeightKg)
+{
+    public double BMI => WeightKg / Math.Pow(HeightCm / 100, 2);
+}
+
+string ClassifyBMI(Person person) => person.BMI switch
+{
+    < 18.5 => "저체중",
+    >= 18.5 and < 23 => "정상",
+    >= 23 and < 25 => "과체중",
+    >= 25 and < 30 => "비만",
+    >= 30 => "고도 비만",
+    _ => "알 수 없음"
+};
+
+var person = new Person("홍길동", 175, 70);
+Console.WriteLine($"BMI: {person.BMI:F1}, 분류: {ClassifyBMI(person)}");
+// 출력: BMI: 22.9, 분류: 정상
+```
+
+**할인율 계산:**
+
+```csharp
+decimal CalculateDiscount(decimal totalAmount) => totalAmount switch
+{
+    < 10000 => 0,           // 할인 없음
+    < 50000 => 0.05m,       // 5% 할인
+    < 100000 => 0.10m,      // 10% 할인
+    < 500000 => 0.15m,      // 15% 할인
+    >= 500000 => 0.20m      // 20% 할인
+};
+
+decimal GetFinalPrice(decimal amount)
+{
+    var discount = CalculateDiscount(amount);
+    return amount * (1 - discount);
+}
+
+Console.WriteLine($"구매금액: 75,000원, 할인율: {CalculateDiscount(75000) * 100}%, 최종금액: {GetFinalPrice(75000):N0}원");
+// 출력: 구매금액: 75,000원, 할인율: 10%, 최종금액: 67,500원
+```
+
+---
+
+## 27.5 논리 패턴
+
+논리 패턴(Logical Pattern)은 C# 9.0에서 도입된 기능으로, 여러 패턴을 논리 연산자(`and`, `or`, `not`)로 결합하여 복잡한 조건을 표현합니다. 이는 불 대수(Boolean Algebra)의 개념을 패턴 매칭에 적용한 것으로, 가독성 높은 조건 표현을 가능하게 합니다.
+
+**`and` 패턴 (논리곱):**
+
+두 패턴이 모두 일치할 때만 true를 반환합니다.
+
+```csharp
+int number = 42;
+
+// 범위 검사
+if (number is >= 10 and <= 100)
+{
+    Console.WriteLine("10 이상 100 이하입니다.");
+}
+
+// switch 식에서 사용
+string ClassifyNumber(int n) => n switch
+{
+    >= 0 and < 10 => "한 자리 양수",
+    >= 10 and < 100 => "두 자리 양수",
+    >= 100 and < 1000 => "세 자리 양수",
+    < 0 and > -10 => "한 자리 음수",
+    _ => "기타"
+};
+
+Console.WriteLine(ClassifyNumber(42));   // 두 자리 양수
+Console.WriteLine(ClassifyNumber(-5));   // 한 자리 음수
+```
+
+**`or` 패턴 (논리합):**
+
+패턴 중 하나라도 일치하면 true를 반환합니다.
+
+```csharp
+char character = 'A';
+
+// 모음 검사
+if (character is 'a' or 'e' or 'i' or 'o' or 'u' or 'A' or 'E' or 'I' or 'O' or 'U')
+{
+    Console.WriteLine("모음입니다.");
+}
+
+// switch 식
+string ClassifyChar(char c) => c switch
+{
+    >= 'a' and <= 'z' => "소문자",
+    >= 'A' and <= 'Z' => "대문자",
+    >= '0' and <= '9' => "숫자",
+    ' ' or '\t' or '\n' => "공백 문자",
+    _ => "특수 문자"
+};
+
+Console.WriteLine(ClassifyChar('A'));    // 대문자
+Console.WriteLine(ClassifyChar('5'));    // 숫자
+Console.WriteLine(ClassifyChar(' '));    // 공백 문자
+```
+
+**`not` 패턴 (논리 부정):**
+
+패턴이 일치하지 않을 때 true를 반환합니다.
+
+```csharp
+object obj = "Hello";
+
+// null이 아닌 경우
+if (obj is not null)
+{
+    Console.WriteLine("null이 아닙니다.");
+}
+
+// 특정 타입이 아닌 경우
+if (obj is not int)
+{
+    Console.WriteLine("정수가 아닙니다.");
+}
+
+// switch 식
+string DescribeObject(object o) => o switch
+{
+    not null => $"null이 아님: {o}",
+    null => "null"
+};
+```
+
+**복잡한 논리 패턴 조합:**
+
+```csharp
+public record Person(string Name, int Age, bool IsStudent);
+
+string GetTicketPrice(Person person) => person switch
+{
+    // 청소년이거나 학생
+    { Age: < 19 } or { IsStudent: true } => "할인 요금",
+    
+    // 노년층이면서 학생이 아님
+    { Age: >= 65 } and { IsStudent: false } => "경로 우대",
+    
+    // 성인이면서 학생이 아님
+    { Age: >= 19 and < 65 } and not { IsStudent: true } => "일반 요금",
+    
+    _ => "확인 필요"
+};
+
+var student = new Person("학생", 25, true);
+var senior = new Person("어르신", 70, false);
+var adult = new Person("성인", 35, false);
+
+Console.WriteLine($"{student.Name}: {GetTicketPrice(student)}");   // 학생: 할인 요금
+Console.WriteLine($"{senior.Name}: {GetTicketPrice(senior)}");     // 어르신: 경로 우대
+Console.WriteLine($"{adult.Name}: {GetTicketPrice(adult)}");       // 성인: 일반 요금
+```
+
+**실전 예제: 상품 필터링:**
+
+```csharp
+public record Product(string Name, decimal Price, string Category, bool InStock);
+
+bool ShouldDisplay(Product product) => product switch
+{
+    // 재고가 있고 (전자제품이거나 책)이면서 가격이 적절한 경우
+    { InStock: true } and ({ Category: "전자제품" } or { Category: "책" }) and { Price: < 100000 }
+        => true,
+    
+    // 재고가 있고 세일 중인 의류
+    { InStock: true, Category: "의류", Price: < 50000 }
+        => true,
+    
+    _ => false
+};
+
+var products = new[]
+{
+    new Product("노트북", 1200000, "전자제품", true),
+    new Product("마우스", 25000, "전자제품", true),
+    new Product("프로그래밍 책", 35000, "책", true),
+    new Product("셔츠", 45000, "의류", true),
+    new Product("품절 상품", 10000, "기타", false)
+};
+
+Console.WriteLine("표시할 상품:");
+foreach (var product in products.Where(ShouldDisplay))
+{
+    Console.WriteLine($"- {product.Name} ({product.Price:N0}원)");
+}
+// 출력:
+// 표시할 상품:
+// - 마우스 (25,000원)
+// - 프로그래밍 책 (35,000원)
+// - 셔츠 (45,000원)
+```
+
+**날짜 범위 검사:**
+
+```csharp
+bool IsWeekend(DateTime date) => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+
+bool IsBusinessHour(DateTime time) => time.Hour is >= 9 and < 18 
+    and time.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday);
+
+string GetTimeStatus(DateTime dt) => dt switch
+{
+    { DayOfWeek: DayOfWeek.Saturday or DayOfWeek.Sunday } 
+        => "주말",
+    
+    { Hour: >= 9 and < 18 } 
+        => "업무 시간",
+    
+    { Hour: >= 18 and < 22 } 
+        => "저녁 시간",
+    
+    { Hour: >= 22 or < 6 } 
+        => "심야 시간",
+    
+    _ => "기타"
+};
+
+var now = DateTime.Now;
+Console.WriteLine($"현재: {GetTimeStatus(now)}");
+Console.WriteLine($"업무 시간 여부: {IsBusinessHour(now)}");
+```
+
+**복합 조건 검증:**
+
+```csharp
+public record Order(decimal Amount, string PaymentMethod, bool IsMember);
+
+string ValidateOrder(Order order) => order switch
+{
+    // 회원이고 (신용카드 또는 계좌이체)이며 금액이 적절
+    { IsMember: true } and ({ PaymentMethod: "신용카드" } or { PaymentMethod: "계좌이체" }) 
+        and { Amount: > 0 and < 1000000 }
+        => "주문 가능",
+    
+    // 비회원이고 신용카드이며 소액
+    { IsMember: false, PaymentMethod: "신용카드", Amount: > 0 and < 100000 }
+        => "주문 가능 (비회원)",
+    
+    { Amount: <= 0 }
+        => "잘못된 금액",
+    
+    { Amount: >= 1000000 }
+        => "고액 주문 - 확인 필요",
+    
+    _ => "주문 불가"
+};
+
+var order1 = new Order(50000, "신용카드", true);
+var order2 = new Order(150000, "무통장입금", false);
+var order3 = new Order(2000000, "신용카드", true);
+
+Console.WriteLine(ValidateOrder(order1));  // 주문 가능
+Console.WriteLine(ValidateOrder(order2));  // 주문 불가
+Console.WriteLine(ValidateOrder(order3));  // 고액 주문 - 확인 필요
+```
+
+---
+
+## 마치며
+
+C#의 패턴 매칭은 복잡한 조건 분기와 타입 검사를 간결하고 안전하게 표현할 수 있는 강력한 도구입니다. 함수형 프로그래밍의 개념을 C#에 도입하여, 더욱 선언적이고 읽기 쉬운 코드 작성을 가능하게 합니다.
+
+**패턴 매칭 활용 가이드:**
+
+1. **타입 패턴**: 다형성 처리, 타입별 동작 분기
+2. **속성 패턴**: 객체 상태 기반 조건 분기, DTO/모델 검증
+3. **위치 패턴**: 튜플, 레코드, 구조 분해가 필요한 경우
+4. **관계 패턴**: 숫자 범위, 경계값 검사
+5. **논리 패턴**: 복합 조건, 여러 패턴의 조합
+
+**다음 단계:**
+
+- 28장에서는 Nullable 참조 타입을 통한 null 안전성을 학습합니다
+- 29장에서는 성능과 메모리 최적화 기법을 익힙니다
+
+**실습 과제:**
+
+1. 도형 클래스 계층을 만들고 타입 패턴으로 넓이 계산하기
+2. 주문 시스템의 복잡한 할인 로직을 패턴 매칭으로 구현하기
+3. 날짜/시간 범위 검사를 관계 패턴과 논리 패턴으로 표현하기
+
+패턴 매칭을 활용하면 코드가 더 간결하고 안전해지며, 유지보수가 쉬워집니다. 실무에서 적극적으로 활용하시기 바랍니다.
