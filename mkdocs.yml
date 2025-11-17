@@ -45,7 +45,6 @@ theme:
     - navigation.indexes
     - navigation.top
     - navigation.footer
-    - navigation.prune
     - toc.follow
     - toc.integrate
     - search.suggest
@@ -106,6 +105,53 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
+# Page tree
+nav:
+  - 홈: index.md
+  - 목차: table-of-contents.md
+  - 기초:
+      - part1-basics/index.md
+      - 1장. 개발 환경 구축: part1-basics/01-setup-environment.md
+      - 2장. C# 기초 문법: part1-basics/02-csharp-basics.md
+      - 3장. 제어문: part1-basics/03-control-flow.md
+      - 4장. 배열: part1-basics/04-arrays.md
+      - 5장. 컬렉션: part1-basics/05-collections.md
+      - 6장. 문자열 처리: part1-basics/06-string-handling.md
+      - 7장. 메서드 기초: part1-basics/07-methods-basics.md
+      - 8장. 고급 메서드 활용: part1-basics/08-advanced-methods.md
+  - 심화:
+      - part2-advanced/index.md
+      - 9장. 클래스와 객체: part2-advanced/09-classes-objects.md
+      - 10장. 상속과 다형성: part2-advanced/10-inheritance-polymorphism.md
+      - 11장. 고급 객체지향 개념: part2-advanced/11-advanced-oop.md
+      - 12장. 예외 처리: part2-advanced/12-exception-handling.md
+      - 13장. 파일 입출력: part2-advanced/13-file-io.md
+      - 14장. LINQ 기초: part2-advanced/14-linq-basics.md
+      - 15장. 고급 LINQ: part2-advanced/15-advanced-linq.md
+      - 16장. 함수형 프로그래밍 개념: part2-advanced/16-functional-programming.md
+      - 17장. 비동기 프로그래밍 기초: part2-advanced/17-async-basics.md
+      - 18장. 고급 비동기 패턴: part2-advanced/18-advanced-async.md
+  - 실전:
+      - part3-practical/index.md
+      - 19장. 콘솔 계산기 만들기: part3-practical/19-console-calculator.md
+      - 20장. 할 일 관리 앱: part3-practical/20-todo-app.md
+      - 21장. 간단한 텍스트 기반 게임: part3-practical/21-text-based-game.md
+      - 22장. REST API 클라이언트: part3-practical/22-rest-api-client.md
+      - 23장. NuGet 패키지 관리: part3-practical/23-nuget-packages.md
+      - 24장. 단위 테스트: part3-practical/24-unit-testing.md
+      - 25장. 디버깅과 로깅: part3-practical/25-debugging-logging.md
+      - 26장. C# 10-14 주요 기능: part3-practical/26-csharp-10-14-features.md
+      - 27장. 패턴 매칭: part3-practical/27-pattern-matching.md
+      - 28장. Nullable 참조 타입: part3-practical/28-nullable-reference-types.md
+      - 29장. 성능과 메모리 최적화: part3-practical/29-performance-optimization.md
+  - 마치며: conclusion.md
+  - 부록:
+      - appendix/index.md
+      - 부록 A. C# 버전 히스토리: appendix/appendix-a-csharp-history.md
+      - 부록 B. .NET CLI 명령어: appendix/appendix-b-dotnet-cli.md
+      - 부록 C. Visual Studio Code 단축키: appendix/appendix-c-vscode-shortcuts.md
+      - 부록 D. 추가 학습 리소스: appendix/appendix-d-learning-resources.md
+
 # Extra
 extra:
   social:
@@ -133,60 +179,3 @@ extra:
 
 extra_css:
   - stylesheets/extra.css
-
-# Navigation
-nav:
-  - 홈: index.md
-  - 목차: table-of-contents.md
-  - 기초편:
-    - part1-basics/index.md
-    - 제1부 시작하기:
-      - 1장. 개발 환경 구축: part1-basics/01-setup-environment.md
-      - 2장. C# 기초 문법: part1-basics/02-csharp-basics.md
-      - 3장. 제어문: part1-basics/03-control-flow.md
-    - 제2부 데이터 구조와 컬렉션:
-      - 4장. 배열: part1-basics/04-arrays.md
-      - 5장. 컬렉션: part1-basics/05-collections.md
-      - 6장. 문자열 처리: part1-basics/06-string-handling.md
-    - 제3부 함수와 메서드:
-      - 7장. 메서드 기초: part1-basics/07-methods-basics.md
-      - 8장. 고급 메서드 활용: part1-basics/08-advanced-methods.md
-  - 심화편:
-    - part2-advanced/index.md
-    - 제4부 객체지향 프로그래밍:
-      - 9장. 클래스와 객체: part2-advanced/09-classes-objects.md
-      - 10장. 상속과 다형성: part2-advanced/10-inheritance-polymorphism.md
-      - 11장. 고급 객체지향 개념: part2-advanced/11-advanced-oop.md
-    - 제5부 예외 처리와 파일 I/O:
-      - 12장. 예외 처리: part2-advanced/12-exception-handling.md
-      - 13장. 파일 입출력: part2-advanced/13-file-io.md
-    - 제6부 LINQ와 함수형 프로그래밍:
-      - 14장. LINQ 기초: part2-advanced/14-linq-basics.md
-      - 15장. 고급 LINQ: part2-advanced/15-advanced-linq.md
-      - 16장. 함수형 프로그래밍 개념: part2-advanced/16-functional-programming.md
-    - 제7부 비동기 프로그래밍:
-      - 17장. 비동기 프로그래밍 기초: part2-advanced/17-async-basics.md
-      - 18장. 고급 비동기 패턴: part2-advanced/18-advanced-async.md
-  - 실전편:
-    - part3-practical/index.md
-    - 제8부 실전 프로젝트:
-      - 19장. 콘솔 계산기 만들기: part3-practical/19-console-calculator.md
-      - 20장. 할 일 관리 앱: part3-practical/20-todo-app.md
-      - 21장. 간단한 텍스트 기반 게임: part3-practical/21-text-based-game.md
-      - 22장. REST API 클라이언트: part3-practical/22-rest-api-client.md
-    - 제9부 .NET 생태계와 도구:
-      - 23장. NuGet 패키지 관리: part3-practical/23-nuget-packages.md
-      - 24장. 단위 테스트: part3-practical/24-unit-testing.md
-      - 25장. 디버깅과 로깅: part3-practical/25-debugging-logging.md
-    - 제10부 모던 C# 기능:
-      - 26장. C# 10-14 주요 기능: part3-practical/26-csharp-10-14-features.md
-      - 27장. 패턴 매칭: part3-practical/27-pattern-matching.md
-      - 28장. Nullable 참조 타입: part3-practical/28-nullable-reference-types.md
-      - 29장. 성능과 메모리 최적화: part3-practical/29-performance-optimization.md
-  - 부록:
-    - appendix/index.md
-    - 부록 A. C# 버전 히스토리: appendix/appendix-a-csharp-history.md
-    - 부록 B. .NET CLI 명령어: appendix/appendix-b-dotnet-cli.md
-    - 부록 C. Visual Studio Code 단축키: appendix/appendix-c-vscode-shortcuts.md
-    - 부록 D. 추가 학습 리소스: appendix/appendix-d-learning-resources.md
-  - 마치며: conclusion.md
