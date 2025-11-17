@@ -1,4 +1,4 @@
-# C# 프로그래밍 실습
+# 메모장으로 코딩하는 C#
 
 Visual Studio Code와 .NET 10 File-based App을 활용한 C# 프로그래밍 학습서
 
