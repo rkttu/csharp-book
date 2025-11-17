@@ -40,7 +40,7 @@ VS Code의 설치 과정은 운영체제에 따라 약간씩 다릅니다. 각 �
 
 Windows는 가장 널리 사용되는 데스크톱 운영체제로, VS Code 역시 Windows 환경에 완벽하게 최적화되어 있습니다.
 
-1. 웹 브라우저(Chrome, Edge, Firefox 등)를 실행하고 공식 홈페이지 https://code.visualstudio.com/ 에 접속합니다.
+1. 웹 브라우저(Chrome, Edge, Firefox 등)를 실행하고 공식 홈페이지 <https://code.visualstudio.com/> 에 접속합니다.
 
 2. 메인 페이지에서 "Download for Windows" 버튼을 클릭합니다. 시스템이 자동으로 감지되어 Windows용 설치 파일이 다운로드됩니다.
 
@@ -60,7 +60,7 @@ Windows는 가장 널리 사용되는 데스크톱 운영체제로, VS Code 역�
 
 macOS 사용자를 위한 설치 과정은 매우 간단하며, Apple의 애플리케이션 관리 방식을 따릅니다.
 
-1. 웹 브라우저에서 https://code.visualstudio.com/ 공식 홈페이지에 접속합니다.
+1. 웹 브라우저에서 <https://code.visualstudio.com/> 공식 홈페이지에 접속합니다.
 
 2. "Download for Mac" 버튼을 클릭하면 macOS용 .zip 압축 파일이 다운로드됩니다. Apple Silicon(M1, M2, M3 등) 또는 Intel 프로세서에 따라 적절한 버전이 자동으로 선택됩니다.
 
@@ -108,7 +108,7 @@ sudo apt update
 sudo apt install code
 ```
 
-더 자세한 배포판별 설치 가이드는 공식 문서 https://code.visualstudio.com/docs/setup/linux 에서 확인할 수 있습니다.
+더 자세한 배포판별 설치 가이드는 공식 문서 <https://code.visualstudio.com/docs/setup/linux> 에서 확인할 수 있습니다.
 
 ### 설치 완료 확인 및 초기 설정
 
@@ -121,7 +121,7 @@ sudo apt install code
 3. **명령 팔레트 테스트**: VS Code의 가장 강력한 기능 중 하나인 명령 팔레트(Command Palette)가 작동하는지 확인합니다:
    - **Windows/Linux**: `Ctrl + Shift + P` 단축키를 누릅니다.
    - **macOS**: `Cmd + Shift + P` 단축키를 누릅니다.
-   
+
    명령 팔레트가 열리고 다양한 명령어를 검색할 수 있다면 설치가 성공적으로 완료된 것입니다.
 
 4. **기본 설정 탐색**: 처음 사용하는 경우, File > Preferences > Settings (Windows/Linux) 또는 Code > Preferences > Settings (macOS)에서 테마, 글꼴 크기, 편집기 동작 등을 자신의 선호도에 맞게 조정할 수 있습니다.
@@ -150,7 +150,7 @@ sudo apt install code
 
 Windows는 .NET의 주요 개발 및 실행 플랫폼으로, Microsoft가 공식적으로 가장 먼저 지원하는 환경입니다.
 
-1. 웹 브라우저를 실행하고 .NET 공식 다운로드 페이지 https://dotnet.microsoft.com/download 에 접속합니다.
+1. 웹 브라우저를 실행하고 .NET 공식 다운로드 페이지 <https://dotnet.microsoft.com/download> 에 접속합니다.
 
 2. 페이지에서 ".NET 10" 섹션을 찾습니다. 여러 버전이 나열되어 있다면 가장 최신 안정 버전(Stable)을 선택합니다.
 
@@ -184,7 +184,7 @@ Homebrew를 통해 설치하면 `brew upgrade` 명령으로 간편하게 최신 
 
 Homebrew를 사용하지 않는다면, Microsoft의 공식 설치 프로그램을 다운로드할 수 있습니다:
 
-1. https://dotnet.microsoft.com/download 에 접속합니다.
+1. <https://dotnet.microsoft.com/download> 에 접속합니다.
 2. macOS용 .NET SDK 설치 프로그램(.pkg 파일)을 다운로드합니다.
 3. 다운로드한 .pkg 파일을 실행하고 화면의 지시를 따릅니다.
 4. 설치가 완료되면 터미널을 재시작하여 변경사항을 적용합니다.
@@ -639,9 +639,11 @@ dotnet run
 ```
 
 4. **실행 결과 확인**:
+
    프로그램이 컴파일되고 실행되며, 출력 결과가 터미널에 직접 표시됩니다.
 
 **`dotnet run` 명령의 동작 원리:**
+
 - 내부적으로 소스 코드를 중간 언어(IL, Intermediate Language)로 컴파일합니다
 - 컴파일이 성공하면 즉시 프로그램을 실행합니다
 - 컴파일 오류가 있다면 오류 메시지를 터미널에 출력하고 실행을 중단합니다
@@ -745,6 +747,7 @@ Console.WriteLine($"최종 결과: {c}");
 #### 1. VARIABLES 패널
 
 디버깅 모드에서 좌측 **"VARIABLES"** 패널은 현재 스코프(범위)에서 접근 가능한 모든 변수를 자동으로 표시합니다:
+
 - **Local**: 현재 함수나 블록 내에서 선언된 지역 변수
 - **Global**: 전역 변수나 정적 변수
 - 각 변수의 이름, 타입, 현재 값이 트리 구조로 표시됩니다
@@ -789,7 +792,8 @@ Console.WriteLine("Hello");  // ✅ 정상 컴파일
 ```
 
 **컴파일러 오류 메시지:**
-```
+
+```text
 error CS1002: ; expected
 ```
 
@@ -808,7 +812,8 @@ Console.WriteLine("Hello");  // ✅ 양쪽 모두 큰따옴표 사용
 ```
 
 **컴파일러 오류 메시지:**
-```
+
+```text
 error CS1010: Newline in constant
 ```
 
@@ -829,7 +834,8 @@ Console.WriteLine(name);  // ✅ 선언된 변수 이름과 일치
 ```
 
 **컴파일러 오류 메시지:**
-```
+
+```text
 error CS0103: The name 'nam' does not exist in the current context
 ```
 
@@ -859,6 +865,7 @@ Console.Write("두 번째");
 ```
 
 **사용 가이드:**
+
 - **`Console.WriteLine()`**: 각 출력마다 새 줄을 시작하고 싶을 때 사용합니다. 대부분의 경우에 적합하며, 출력 결과를 구조화하기 쉽습니다.
 - **`Console.Write()`**: 여러 정보를 한 줄에 연속으로 출력하고 싶을 때 사용합니다. 로그나 진행 표시줄 등에 유용합니다.
 
@@ -871,12 +878,14 @@ Console.Write("두 번째");
 **요구사항**: 자신의 이름, 나이, 거주 도시를 변수에 저장하고, 문자열 보간을 사용하여 자연스러운 문장으로 출력하는 프로그램을 작성하세요.
 
 **예상 출력**:
-```
+
+```text
 안녕하세요! 제 이름은 김민수이고, 25살입니다.
 현재 서울에 거주하고 있습니다.
 ```
 
 **힌트 코드**:
+
 ```csharp
 var name = "여기에 이름을 입력하세요";
 var age = 0;  // 여기에 나이를 입력하세요
@@ -894,7 +903,8 @@ Console.WriteLine($"현재 {city}에 거주하고 있습니다.");
 **요구사항**: 두 개의 정수를 변수에 저장하고, 네 가지 기본 산술 연산(덧셈, 뺄셈, 곱셈, 나눗셈)의 결과를 각각 계산하여 출력하는 프로그램을 작성하세요.
 
 **예상 출력** (num1=20, num2=5인 경우):
-```
+
+```text
 20 + 5 = 25
 20 - 5 = 15
 20 × 5 = 100
@@ -902,6 +912,7 @@ Console.WriteLine($"현재 {city}에 거주하고 있습니다.");
 ```
 
 **힌트 코드**:
+
 ```csharp
 var num1 = 20;
 var num2 = 5;
@@ -920,11 +931,13 @@ Console.WriteLine($"{num1} - {num2} = {num1 - num2}");
 **변환 공식**: `화씨 = 섭씨 × 9 ÷ 5 + 32`
 
 **예상 출력** (섭씨 25도인 경우):
-```
+
+```text
 섭씨 25도는 화씨 77도입니다.
 ```
 
 **힌트 코드**:
+
 ```csharp
 var celsius = 25.0;  // 소수점 계산을 위해 실수형 사용
 var fahrenheit = celsius * 9 / 5 + 32;

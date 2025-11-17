@@ -5,30 +5,36 @@ C#은 2000년 첫 출시 이후 지속적으로 발전해온 프로그래밍 언
 ## A.1 C# 1.0 ~ 5.0
 
 ### C# 1.0 (2002) - 시작
+
 - 기본 객체지향 기능
 - 속성(Properties), 이벤트, 델리게이트
 
 ### C# 2.0 (2005) - 제네릭
+
 - 제네릭 (`List<T>`, `Dictionary<TKey,TValue>`)
 - Nullable 타입 (`int?`)
 - 익명 메서드, 반복자 (yield)
 
 ### C# 3.0 (2007) - LINQ
+
 - LINQ (Language Integrated Query)
 - 람다 식 (`=>`)
 - 익명 타입, 자동 속성, 확장 메서드
 
 ### C# 4.0 (2010) - 동적 프로그래밍
+
 - `dynamic` 키워드
 - 선택적 매개변수, 명명된 인수
 
 ### C# 5.0 (2012) - 비동기
+
 - `async`/`await` 키워드
 - `Task` 기반 비동기 패턴
 
 ## A.2 C# 6.0 ~ 9.0
 
 ### C# 6.0 (2015) - 문법 개선
+
 - 문자열 보간 (`$"Hello {name}"`)
 - null 조건 연산자 (`?.`, `?[]`)
 - Expression-bodied 멤버
@@ -36,6 +42,7 @@ C#은 2000년 첫 출시 이후 지속적으로 발전해온 프로그래밍 언
 - `nameof` 연산자
 
 ### C# 7.0 (2017) - 튜플과 패턴
+
 - 튜플 개선
 - 패턴 매칭 기초
 - 로컬 함수
@@ -43,6 +50,7 @@ C#은 2000년 첫 출시 이후 지속적으로 발전해온 프로그래밍 언
 - 디스카드 (`_`)
 
 ### C# 8.0 (2019) - Nullable 참조 타입
+
 - Nullable 참조 타입
 - 비동기 스트림 (`IAsyncEnumerable<T>`)
 - 인덱스와 범위 (`^`, `..`)
@@ -50,13 +58,15 @@ C#은 2000년 첫 출시 이후 지속적으로 발전해온 프로그래밍 언
 - 기본 인터페이스 멤버
 
 ### C# 9.0 (2020) - Record 타입
+
 - Record 타입
 - Init-only 속성
 - 최상위 문 (Top-level statements)
 - 패턴 매칭 향상
 
 ## A.3 C# 10 (2021) - 간결성
-*자세한 내용은 26장 참조*
+
+> 자세한 내용은 26장 참조
 
 - Global using 지시문
 - File-scoped 네임스페이스
@@ -64,7 +74,8 @@ C#은 2000년 첫 출시 이후 지속적으로 발전해온 프로그래밍 언
 - 필수 속성 (required)
 
 ## A.4 C# 11 (2022) - 문자열과 제네릭
-*자세한 내용은 26장 참조*
+
+> 자세한 내용은 26장 참조
 
 - Raw string literals
 - Generic attributes
@@ -73,7 +84,8 @@ C#은 2000년 첫 출시 이후 지속적으로 발전해온 프로그래밍 언
 - File-local types
 
 ## A.5 C# 12 (2023) - 간결성 극대화
-*자세한 내용은 26장 참조*
+
+> 자세한 내용은 26장 참조
 
 - Primary constructors
 - Collection expressions
@@ -81,14 +93,16 @@ C#은 2000년 첫 출시 이후 지속적으로 발전해온 프로그래밍 언
 - Alias any type
 
 ## A.6 C# 13 (2024) - 성능과 유연성
-*자세한 내용은 26장 참조*
+
+> 자세한 내용은 26장 참조
 
 - params collections
 - New lock type
 - ref struct interfaces
 
 ## A.7 C# 14 (프리뷰) - 미래 기능
-*자세한 내용은 26장 참조*
+
+> 자세한 내용은 26장 참조
 
 - Field keyword
 - Extensions

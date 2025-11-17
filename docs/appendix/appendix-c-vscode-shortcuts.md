@@ -3,6 +3,7 @@
 VS Code를 효율적으로 사용하기 위한 필수 단축키를 정리했습니다. Windows/Linux와 macOS의 단축키를 함께 표기합니다.
 
 **표기법:**
+
 - `Ctrl` (Windows/Linux) = `Cmd` (macOS)
 - `Alt` (Windows/Linux) = `Option` (macOS)
 

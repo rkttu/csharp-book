@@ -75,4 +75,4 @@ dotnet test
 dotnet test /p:CollectCoverage=true
 ```
 
-더 자세한 옵션은 공식 문서를 참조하세요: https://learn.microsoft.com/dotnet/core/tools/
+더 자세한 옵션은 공식 문서를 참조하세요: <https://learn.microsoft.com/dotnet/core/tools/>
