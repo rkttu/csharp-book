@@ -123,7 +123,7 @@ string withTab = "이름:\t김철수";
 string withQuote = "그는 \"안녕\"이라고 말했다.";
 
 // 축자 문자열(Verbatim String) - @ 접두사
-string path = @"C:\Users\Username\Documents";  // 백슬래시를 이스케이프할 필요 없음
+string path = @"/home/username/Documents";  // 경로를 그대로 표현
 string multiline = @"첫 번째 줄
 두 번째 줄
 세 번째 줄";  // 줄바꿈을 그대로 포함
