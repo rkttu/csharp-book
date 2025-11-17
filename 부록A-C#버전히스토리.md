@@ -920,76 +920,872 @@ C# 3.0은 언어의 패러다임을 근본적으로 변화시켰습니다:
 4. **생산성 향상**: 보일러플레이트 코드 대폭 감소
 5. **타입 안전성 유지**: 강력한 타입 시스템을 유지하면서 유연성 확보
 
-### C# 4.0 (2010년)
+### C# 4.0 (2010년) - 동적 프로그래밍과 상호 운용성
 
-동적 타입과 상호 운용성이 개선되었으며, COM 상호 운용성이 크게 향상되었습니다.
+C# 4.0은 2010년 4월 .NET Framework 4.0과 함께 출시되었으며, **동적 프로그래밍(Dynamic Programming)**을 C#에 도입했습니다. 이는 정적 타입 언어인 C#에 동적 언어의 유연성을 더하는 획기적인 변화였으며, Python, Ruby, JavaScript 같은 동적 언어와의 상호 운용성을 크게 개선했습니다. 또한 COM 상호 운용성을 대폭 개선하여 Office 자동화 같은 시나리오를 훨씬 쉽게 만들었습니다.
 
-**주요 기능:**
-- dynamic 타입
-- 명명된 인수(Named Arguments)와 선택적 매개변수(Optional Parameters)
-- 제네릭 공변성과 반공변성(Covariance and Contravariance)
-- COM 상호 운용성 개선
+**dynamic 타입 - 정적과 동적의 융합:**
 
 ```csharp
-// 선택적 매개변수와 명명된 인수
-public void CreateUser(string name, int age = 18, string city = "Seoul")
-{
-    Console.WriteLine($"{name}, {age}, {city}");
-}
+// 정적 타입 방식
+object obj = GetSomeObject();
+// obj.DoSomething();  // 컴파일 오류! object는 DoSomething 메서드가 없음
+((SomeType)obj).DoSomething();  // 명시적 캐스팅 필요
 
-CreateUser("Alice");  // age와 city는 기본값 사용
-CreateUser("Bob", city: "Busan", age: 25);  // 명명된 인수
+// dynamic 타입 방식
+dynamic dyn = GetSomeObject();
+dyn.DoSomething();  // 런타임에 해결됨! 컴파일 오류 없음
+dyn.AnyMethod("parameters", 123);  // 런타임까지 검증 지연
+
+// JSON 파싱 예제
+dynamic json = JsonConvert.DeserializeObject(jsonString);
+string name = json.name;  // 타입 안전하지 않지만 편리
+int age = json.age;
+
+// Python/IronPython 상호 운용
+dynamic pythonScript = Python.CreateRuntime().UseFile("script.py");
+dynamic result = pythonScript.calculate(10, 20);
 ```
 
-### C# 5.0 (2012년)
+**명명된 인수와 선택적 매개변수:**
 
-async/await 패턴의 도입으로 비동기 프로그래밍이 혁신적으로 간단해졌습니다. 이는 C#의 가장 성공적인 기능 중 하나로 평가받습니다.
-
-**주요 기능:**
-- async와 await 키워드
-- 호출자 정보 특성(Caller Info Attributes)
+이 기능들은 COM 상호 운용성을 개선하기 위해 도입되었지만, 일반적인 C# 코드에서도 매우 유용합니다.
 
 ```csharp
-// async/await 예제
-public async Task<string> FetchDataAsync(string url)
+// C# 3.0 이전 - 모든 매개변수를 전달해야 함
+public void CreateUser(string name, int age, string city, bool isActive)
 {
-    using (var client = new HttpClient())
+    // 구현...
+}
+
+CreateUser("Alice", 30, "", false);  // 기본값을 위해 빈 값 전달
+
+// C# 4.0 - 선택적 매개변수
+public void CreateUser(
+    string name, 
+    int age = 18, 
+    string city = "Seoul", 
+    bool isActive = true)
+{
+    Console.WriteLine($"{name}, {age}, {city}, {isActive}");
+}
+
+// 일부 매개변수만 전달
+CreateUser("Alice");  // Alice, 18, Seoul, true
+CreateUser("Bob", 25);  // Bob, 25, Seoul, true
+
+// 명명된 인수로 순서 무시
+CreateUser(
+    name: "Charlie", 
+    city: "Busan",   // age는 건너뜀
+    isActive: false);
+
+// 실전 예제 - 복잡한 메서드 호출 개선
+public void DrawRectangle(
+    int x = 0, 
+    int y = 0, 
+    int width = 100, 
+    int height = 100,
+    Color color = Color.Black,
+    int borderWidth = 1)
+{
+    // 그리기 로직...
+}
+
+// 필요한 것만 명시
+DrawRectangle(
+    x: 50, 
+    y: 50, 
+    color: Color.Red);
+```
+
+**COM 상호 운용성 개선:**
+
+C# 4.0 이전에는 Office 자동화가 매우 번거로웠습니다:
+
+```csharp
+// C# 3.0 - Excel 자동화 (매우 복잡)
+var excel = new Microsoft.Office.Interop.Excel.Application();
+var workbook = excel.Workbooks.Add(Type.Missing);
+var worksheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Sheets[1];
+
+// 셀에 값 설정 - 굉장히 장황함!
+var range = worksheet.get_Range("A1", Type.Missing);
+range.set_Value(Type.Missing, "Hello");
+
+// 모든 선택적 매개변수에 Type.Missing 전달 필요
+worksheet.get_Range("A1", "B10").Copy(Type.Missing);
+
+// C# 4.0 - 훨씬 간결
+var excel = new Microsoft.Office.Interop.Excel.Application();
+var workbook = excel.Workbooks.Add();
+var worksheet = workbook.Sheets[1];
+
+// 간단한 속성 접근
+worksheet.Range["A1"].Value = "Hello";
+
+// 선택적 매개변수 자동 처리
+worksheet.Range["A1", "B10"].Copy();
+
+// 명명된 인수로 가독성 향상
+worksheet.Range["A1"].Font.Bold = true;
+worksheet.Range["A1"].Font.Size = 14;
+```
+
+**제네릭 공변성과 반공변성(Covariance and Contravariance):**
+
+이는 제네릭 인터페이스와 델리게이트의 타입 호환성을 개선하는 고급 기능입니다.
+
+```csharp
+// 공변성(Covariance) - out 키워드
+// 더 구체적인 타입을 더 일반적인 타입으로 할당 가능
+IEnumerable<string> strings = new List<string> { "a", "b", "c" };
+IEnumerable<object> objects = strings;  // C# 4.0에서 가능!
+// IEnumerable<T>는 T를 반환만 하므로 안전
+
+// 반공변성(Contravariance) - in 키워드
+// 더 일반적인 타입을 더 구체적인 타입으로 할당 가능
+Action<object> actObject = obj => Console.WriteLine(obj);
+Action<string> actString = actObject;  // C# 4.0에서 가능!
+// Action<T>는 T를 입력만 받으므로 안전
+
+// 실전 예제
+public interface IAnimal { }
+public class Dog : IAnimal { }
+public class Cat : IAnimal { }
+
+// 공변성 예제
+IEnumerable<Dog> dogs = new List<Dog>();
+IEnumerable<IAnimal> animals = dogs;  // OK
+
+// 커스텀 인터페이스에서 공변성 사용
+public interface IRepository<out T>
+{
+    T GetById(int id);
+    IEnumerable<T> GetAll();
+}
+
+public interface IWriter<in T>
+{
+    void Write(T item);
+}
+
+// 타입 안전하게 변환 가능
+IRepository<Dog> dogRepo = GetDogRepository();
+IRepository<IAnimal> animalRepo = dogRepo;  // 공변성
+
+IWriter<IAnimal> animalWriter = GetAnimalWriter();
+IWriter<Dog> dogWriter = animalWriter;  // 반공변성
+```
+
+**기타 개선사항:**
+
+```csharp
+// 인덱서에서 ref/out 매개변수 사용 가능
+public class Matrix
+{
+    private int[,] data;
+    
+    public ref int this[int row, int col]
     {
-        string result = await client.GetStringAsync(url);
-        return result;
+        get { return ref data[row, col]; }
+    }
+}
+
+var matrix = new Matrix();
+ref int cell = ref matrix[0, 0];
+cell = 42;  // 직접 수정
+
+// 임베디드 상호 운용 타입
+// 더 이상 Primary Interop Assembly (PIA)를 배포할 필요 없음
+```
+
+**C# 4.0의 의의:**
+
+- **유연성 확보**: 정적 타입의 안전성을 유지하면서 필요시 동적 기능 활용
+- **COM 개선**: Windows 플랫폼 통합 크게 개선
+- **제네릭 완성**: 공변성/반공변성으로 제네릭의 표현력 향상
+- **생산성**: 명명된 인수와 선택적 매개변수로 API 사용성 개선
+
+### C# 5.0 (2012년) - 비동기 프로그래밍의 혁명
+
+C# 5.0은 2012년 8월 .NET Framework 4.5와 함께 출시되었으며, **async/await 패턴**을 도입했습니다. 이는 C# 역사상 가장 성공적이고 영향력 있는 기능 중 하나로, 비동기 프로그래밍을 혁신적으로 단순화했습니다. Eric Lippert와 C# 언어팀이 설계한 이 기능은 복잡한 상태 머신을 컴파일러가 자동 생성하도록 하여, 개발자는 마치 동기 코드처럼 비동기 코드를 작성할 수 있게 되었습니다.
+
+**비동기 프로그래밍의 역사적 문제:**
+
+멀티코어 프로세서의 보급과 네트워크 중심 애플리케이션의 증가로 비동기 프로그래밍의 중요성이 커졌지만, 구현은 매우 복잡했습니다.
+
+```csharp
+// C# 4.0 이전의 비동기 프로그래밍 - APM (Asynchronous Programming Model)
+public void DownloadDataOld(string url)
+{
+    WebClient client = new WebClient();
+    client.DownloadStringCompleted += (sender, e) =>
+    {
+        if (e.Error != null)
+        {
+            Console.WriteLine("Error: " + e.Error.Message);
+            return;
+        }
+        
+        string data = e.Result;
+        ProcessData(data);
+    };
+    
+    client.DownloadStringAsync(new Uri(url));
+    // 여기서 메서드가 즉시 반환됨
+    // 결과를 기다릴 방법이 없음!
+}
+
+// 순차적으로 여러 비동기 작업 수행 - 콜백 지옥(Callback Hell)
+public void DownloadAndProcessMultiple()
+{
+    WebClient client1 = new WebClient();
+    client1.DownloadStringCompleted += (sender1, e1) =>
+    {
+        string data1 = e1.Result;
+        
+        WebClient client2 = new WebClient();
+        client2.DownloadStringCompleted += (sender2, e2) =>
+        {
+            string data2 = e2.Result;
+            
+            WebClient client3 = new WebClient();
+            client3.DownloadStringCompleted += (sender3, e3) =>
+            {
+                string data3 = e3.Result;
+                
+                // 드디어 모든 데이터 사용 가능
+                CombineData(data1, data2, data3);
+            };
+            client3.DownloadStringAsync(new Uri("url3"));
+        };
+        client2.DownloadStringAsync(new Uri("url2"));
+    };
+    client1.DownloadStringAsync(new Uri("url1"));
+}
+
+// 문제점:
+// 1. 가독성 최악 - 중첩된 콜백으로 인한 "피라미드 of 둠"
+// 2. 오류 처리 복잡 - 각 콜백마다 에러 처리 필요
+// 3. 디버깅 어려움 - 스택 트레이스가 끊김
+// 4. 상태 관리 복잡 - 변수 스코프 관리 어려움
+// 5. 취소 및 타임아웃 구현 복잡
+```
+
+**async/await의 혁명:**
+
+C# 5.0의 async/await는 이 모든 문제를 우아하게 해결했습니다:
+
+```csharp
+// C# 5.0 - 동기 코드처럼 보이지만 비동기로 실행
+public async Task<string> DownloadDataAsync(string url)
+{
+    using (HttpClient client = new HttpClient())
+    {
+        string data = await client.GetStringAsync(url);
+        return data;
+    }
+}
+
+// 순차적 비동기 작업 - 놀랍도록 간단
+public async Task DownloadAndProcessMultipleAsync()
+{
+    using (HttpClient client = new HttpClient())
+    {
+        // 순차 실행 - 코드가 동기처럼 읽힘!
+        string data1 = await client.GetStringAsync("url1");
+        string data2 = await client.GetStringAsync("url2");
+        string data3 = await client.GetStringAsync("url3");
+        
+        CombineData(data1, data2, data3);
+    }
+}
+
+// 병렬 실행도 쉽게
+public async Task DownloadAllAsync()
+{
+    using (HttpClient client = new HttpClient())
+    {
+        // 모든 다운로드를 병렬로 시작
+        Task<string> task1 = client.GetStringAsync("url1");
+        Task<string> task2 = client.GetStringAsync("url2");
+        Task<string> task3 = client.GetStringAsync("url3");
+        
+        // 모두 완료될 때까지 대기
+        await Task.WhenAll(task1, task2, task3);
+        
+        // 결과 수집
+        CombineData(task1.Result, task2.Result, task3.Result);
     }
 }
 ```
+
+**Task와 Task<T> - 비동기의 핵심:**
+
+```csharp
+// Task<T> - 결과를 반환하는 비동기 작업
+public async Task<int> CalculateAsync()
+{
+    await Task.Delay(1000);  // 1초 대기 (비동기)
+    return 42;
+}
+
+// Task - 결과를 반환하지 않는 비동기 작업
+public async Task ProcessAsync()
+{
+    await Task.Delay(1000);
+    Console.WriteLine("처리 완료");
+}
+
+// 사용
+int result = await CalculateAsync();
+await ProcessAsync();
+
+// Task 조합
+public async Task<string> GetUserDataAsync(int userId)
+{
+    // 여러 비동기 작업을 순차/병렬로 조합
+    var userTask = GetUserAsync(userId);
+    var ordersTask = GetOrdersAsync(userId);
+    var preferencesTask = GetPreferencesAsync(userId);
+    
+    // 모두 병렬로 실행하고 완료 대기
+    await Task.WhenAll(userTask, ordersTask, preferencesTask);
+    
+    // 결과 조합
+    return CombineUserData(
+        userTask.Result, 
+        ordersTask.Result, 
+        preferencesTask.Result);
+}
+```
+
+**실제 시나리오 - 웹 애플리케이션:**
+
+```csharp
+// ASP.NET MVC 컨트롤러
+public class ProductController : Controller
+{
+    private readonly IProductRepository _repository;
+    
+    // async 액션 메서드
+    public async Task<ActionResult> Index()
+    {
+        // 데이터베이스에서 비동기로 가져오기
+        // 스레드는 대기하지 않고 스레드 풀로 반환됨
+        List<Product> products = await _repository.GetAllAsync();
+        
+        return View(products);
+    }
+    
+    public async Task<ActionResult> Details(int id)
+    {
+        // 여러 데이터 소스에서 병렬로 가져오기
+        Task<Product> productTask = _repository.GetByIdAsync(id);
+        Task<List<Review>> reviewsTask = _repository.GetReviewsAsync(id);
+        Task<List<Product>> relatedTask = _repository.GetRelatedAsync(id);
+        
+        await Task.WhenAll(productTask, reviewsTask, relatedTask);
+        
+        var viewModel = new ProductDetailsViewModel
+        {
+            Product = productTask.Result,
+            Reviews = reviewsTask.Result,
+            RelatedProducts = relatedTask.Result
+        };
+        
+        return View(viewModel);
+    }
+}
+```
+
+**예외 처리 - 동기 코드처럼:**
+
+```csharp
+// try-catch가 비동기에서도 자연스럽게 작동!
+public async Task<string> SafeDownloadAsync(string url)
+{
+    try
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            return await client.GetStringAsync(url);
+        }
+    }
+    catch (HttpRequestException ex)
+    {
+        Console.WriteLine($"HTTP 오류: {ex.Message}");
+        return string.Empty;
+    }
+    catch (TaskCanceledException ex)
+    {
+        Console.WriteLine("타임아웃 또는 취소됨");
+        return string.Empty;
+    }
+}
+
+// 여러 비동기 작업의 예외 처리
+public async Task ProcessMultipleAsync()
+{
+    var tasks = new List<Task>
+    {
+        ProcessItemAsync(1),
+        ProcessItemAsync(2),
+        ProcessItemAsync(3)
+    };
+    
+    try
+    {
+        await Task.WhenAll(tasks);
+    }
+    catch (Exception)
+    {
+        // Task.WhenAll은 첫 번째 예외만 던짐
+        // 모든 예외를 확인하려면:
+        foreach (var task in tasks)
+        {
+            if (task.IsFaulted)
+            {
+                Console.WriteLine(task.Exception.Message);
+            }
+        }
+    }
+}
+```
+
+**취소 토큰(CancellationToken):**
+
+```csharp
+public async Task<string> DownloadWithCancellationAsync(
+    string url, 
+    CancellationToken cancellationToken)
+{
+    using (HttpClient client = new HttpClient())
+    {
+        // 취소 토큰 전달
+        return await client.GetStringAsync(url, cancellationToken);
+    }
+}
+
+// 사용 - 타임아웃과 함께
+public async Task UseWithTimeoutAsync()
+{
+    var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+    
+    try
+    {
+        string data = await DownloadWithCancellationAsync(
+            "https://example.com", 
+            cts.Token);
+        Console.WriteLine(data);
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("작업이 10초 내에 완료되지 않아 취소됨");
+    }
+}
+
+// UI에서 사용자가 취소하는 경우
+Button cancelButton;
+CancellationTokenSource cts;
+
+async void StartButton_Click(object sender, EventArgs e)
+{
+    cts = new CancellationTokenSource();
+    cancelButton.Enabled = true;
+    
+    try
+    {
+        await LongRunningOperationAsync(cts.Token);
+        MessageBox.Show("완료!");
+    }
+    catch (OperationCanceledException)
+    {
+        MessageBox.Show("사용자가 취소함");
+    }
+    finally
+    {
+        cancelButton.Enabled = false;
+    }
+}
+
+void CancelButton_Click(object sender, EventArgs e)
+{
+    cts?.Cancel();
+}
+```
+
+**호출자 정보 특성(Caller Info Attributes):**
+
+로깅과 디버깅을 위한 편리한 기능:
+
+```csharp
+using System.Runtime.CompilerServices;
+
+public class Logger
+{
+    public void Log(
+        string message,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+    {
+        Console.WriteLine($"[{memberName}] {message}");
+        Console.WriteLine($"  at {filePath}:{lineNumber}");
+    }
+}
+
+// 사용
+public class MyClass
+{
+    private Logger logger = new Logger();
+    
+    public void DoSomething()
+    {
+        logger.Log("작업 시작");  
+        // 출력: [DoSomething] 작업 시작
+        //       at C:\Projects\MyClass.cs:42
+        
+        // 컴파일러가 자동으로 메서드명, 파일, 라인 번호 전달!
+    }
+}
+
+// INotifyPropertyChanged 구현 간소화
+public class Person : INotifyPropertyChanged
+{
+    public event PropertyChangedEventHandler PropertyChanged;
+    
+    private string name;
+    public string Name
+    {
+        get { return name; }
+        set
+        {
+            name = value;
+            OnPropertyChanged();  // 속성 이름 자동 전달!
+        }
+    }
+    
+    protected void OnPropertyChanged(
+        [CallerMemberName] string propertyName = null)
+    {
+        PropertyChanged?.Invoke(
+            this, 
+            new PropertyChangedEventArgs(propertyName));
+    }
+}
+```
+
+**async/await의 내부 메커니즘:**
+
+```csharp
+// 개발자가 작성한 코드
+public async Task<int> GetValueAsync()
+{
+    await Task.Delay(1000);
+    return 42;
+}
+
+// 컴파일러가 생성하는 상태 머신 (간소화된 버전)
+public Task<int> GetValueAsync()
+{
+    var stateMachine = new <GetValueAsync>d__0();
+    stateMachine.builder = AsyncTaskMethodBuilder<int>.Create();
+    stateMachine.state = -1;
+    stateMachine.builder.Start(ref stateMachine);
+    return stateMachine.builder.Task;
+}
+
+// 복잡한 상태 관리를 컴파일러가 자동으로 처리!
+```
+
+**C# 5.0의 영향과 유산:**
+
+C# 5.0의 async/await는 프로그래밍 언어 설계에 지대한 영향을 미쳤습니다:
+
+1. **다른 언어로 확산**: JavaScript (ES2017), Python (3.5), Rust, Kotlin 등이 유사한 패턴 도입
+2. **클라우드/모바일 시대 대응**: 네트워크 중심 애플리케이션 개발 혁신
+3. **스레드 효율성**: 서버 애플리케이션의 확장성 크게 개선 (특히 ASP.NET)
+4. **개발자 생산성**: 복잡한 비동기 로직을 동기 코드처럼 작성
+5. **표준화**: Task-based Asynchronous Pattern (TAP)이 .NET의 표준으로 확립
+
+**C# 1.0-5.0의 여정 정리:**
+
+C#의 첫 10년은 언어의 기반을 완성한 시기였습니다:
+- **C# 1.0**: 객체지향 기반 구축
+- **C# 2.0**: 제네릭으로 타입 안전성 강화
+- **C# 3.0**: LINQ로 함수형 프로그래밍 통합
+- **C# 4.0**: 동적 프로그래밍 지원
+- **C# 5.0**: 비동기 프로그래밍 혁신
+
+이 기간 동안 C#은 Java의 대안에서 시작하여, 독자적인 정체성과 철학을 확립한 현대적 프로그래밍 언어로 성장했습니다.
 
 ---
 
 ## A.2 C# 6.0 ~ 9.0
 
-### C# 6.0 (2015년)
+C#의 두 번째 10년은 개발자 경험과 코드 품질을 크게 개선한 시기였습니다. 이 기간 동안 C#은 문법적 간결성, 타입 안전성, 그리고 현대적 프로그래밍 패러다임(특히 함수형과 불변성)을 점진적으로 강화했습니다. Mads Torgersen이 수석 설계자로 참여하면서, C#은 더욱 표현력 있고 안전한 언어로 진화했습니다.
 
-코드를 더 간결하고 읽기 쉽게 만드는 다양한 문법적 개선이 이루어졌습니다.
+### C# 6.0 (2015년) - 코드 간결성의 추구
 
-**주요 기능:**
-- 문자열 보간(String Interpolation): `$"Hello {name}"`
-- null 조건부 연산자(Null-conditional Operator): `?.`
-- 표현식 본문 멤버(Expression-bodied Members): `public int Square(int x) => x * x;`
-- Auto-property 초기화: `public string Name { get; set; } = "Default";`
-- nameof 연산자
-- 예외 필터(Exception Filters): `catch (Exception ex) when (ex.Code == 404)`
+C# 6.0은 2015년 7월 .NET Framework 4.6 및 첫 오픈소스 .NET Core 1.0과 함께 출시되었습니다. 이 버전은 새로운 기능보다는 **기존 기능의 문법적 개선**에 초점을 맞췄습니다. Roslyn 컴파일러의 도입으로 언어 설계팀은 더 빠르게 새로운 기능을 실험하고 추가할 수 있게 되었습니다.
+
+**문자열 보간(String Interpolation) - String.Format의 현대적 대안:**
 
 ```csharp
-// C# 6.0 주요 기능 예제
+// C# 5.0 이전 - String.Format (오류 발생하기 쉬움)
+string message = String.Format(
+    "Hello, {0}! You have {1} messages.",
+    name, 
+    count);
+
+// 잘못된 인덱스나 타입 - 런타임 오류!
+string bad = String.Format("Hello, {2}!", name, count);  // FormatException
+
+// C# 6.0 - 문자열 보간 (타입 안전, 가독성 향상)
+string message = $"Hello, {name}! You have {count} messages.";
+
+// 표현식도 포함 가능
+decimal price = 19.99m;
+int quantity = 3;
+string receipt = $"Total: ${price * quantity:F2}";  // "Total: $59.97"
+
+// 삼항 연산자와 결합
+string status = $"You have {count} message{(count == 1 ? "" : "s")}";
+
+// 문화권 지정
+string localized = $"{DateTime.Now:D}";  // 긴 날짜 형식
+
+// 복잡한 표현식도 가능
+string info = $"Processing: {items.Where(x => x.IsActive).Count()} items";
+```
+
+**null 조건부 연산자(?.) - NullReferenceException 방어:**
+
+C# 역사상 가장 많은 런타임 오류를 방지한 기능입니다.
+
+```csharp
+// C# 5.0 이전 - 방어적 null 검사
+Customer customer = GetCustomer();
+string city = null;
+if (customer != null)
+{
+    if (customer.Address != null)
+    {
+        city = customer.Address.City;
+    }
+}
+
+// C# 6.0 - null 조건부 연산자
+string city = customer?.Address?.City;
+
+// 이벤트 호출의 안전한 패턴
+// C# 5.0 - 레이스 컨디션 가능
+if (PropertyChanged != null)
+{
+    PropertyChanged(this, args);  // null이 될 수 있음!
+}
+
+// C# 6.0 - 스레드 안전
+PropertyChanged?.Invoke(this, args);
+
+// 배열과 인덱서에도 사용
+string firstCustomerCity = customers?[0]?.Address?.City;
+
+// 메서드 체이닝
+var result = service?.GetData()?.ProcessData()?.ToResult();
+
+// null 병합과 결합
+string displayName = user?.Profile?.DisplayName ?? "Anonymous";
+```
+
+**표현식 본문 멤버(Expression-bodied Members):**
+
+```csharp
+// C# 5.0
 public class Person
 {
-    public string Name { get; set; } = "Unknown";
+    private string firstName;
+    private string lastName;
     
-    // 표현식 본문 메서드
-    public string GetGreeting() => $"Hello, {Name}!";
+    public string GetFullName()
+    {
+        return firstName + " " + lastName;
+    }
     
-    // null 조건부 연산자
-    public int? GetLength(string text) => text?.Length;
+    public string FirstName
+    {
+        get { return firstName; }
+    }
+}
+
+// C# 6.0 - 훨씬 간결
+public class Person
+{
+    private string firstName;
+    private string lastName;
+    
+    public string GetFullName() => firstName + " " + lastName;
+    
+    public string FirstName => firstName;
+    
+    // 읽기 전용 속성도 간결하게
+    public string FullName => $"{firstName} {lastName}";
+    public int NameLength => FullName.Length;
+    public bool HasLongName => NameLength > 20;
 }
 ```
+
+**Auto-property 초기화:**
+
+```csharp
+// C# 5.0 - 생성자에서 초기화 필요
+public class Configuration
+{
+    public string Server { get; set; }
+    public int Port { get; set; }
+    public bool UseSSL { get; set; }
+    
+    public Configuration()
+    {
+        Server = "localhost";
+        Port = 80;
+        UseSSL = false;
+    }
+}
+
+// C# 6.0 - 선언과 동시에 초기화
+public class Configuration
+{
+    public string Server { get; set; } = "localhost";
+    public int Port { get; set; } = 80;
+    public bool UseSSL { get; set; } = false;
+}
+
+// 읽기 전용 auto-property
+public class ImmutablePoint
+{
+    public int X { get; } = 0;
+    public int Y { get; } = 0;
+    
+    public ImmutablePoint(int x, int y)
+    {
+        X = x;  // 생성자에서만 설정 가능
+        Y = y;
+    }
+}
+```
+
+**nameof 연산자 - 리팩토링 안전성:**
+
+```csharp
+// C# 5.0 - 문자열 리터럴 (리팩토링 시 문제)
+public void ValidateUser(User user)
+{
+    if (user == null)
+        throw new ArgumentNullException("user");  // 오타 가능, 리팩토링 시 안 바뀜
+}
+
+// C# 6.0 - nameof 연산자
+public void ValidateUser(User user)
+{
+    if (user == null)
+        throw new ArgumentNullException(nameof(user));  // 타입 안전, 리팩토링 안전
+}
+
+// INotifyPropertyChanged 구현
+public class Person : INotifyPropertyChanged
+{
+    private string name;
+    
+    public string Name
+    {
+        get => name;
+        set
+        {
+            name = value;
+            PropertyChanged?.Invoke(
+                this, 
+                new PropertyChangedEventArgs(nameof(Name)));  // 안전!
+        }
+    }
+    
+    public event PropertyChangedEventHandler PropertyChanged;
+}
+
+// 로깅
+logger.Info($"Entering {nameof(ProcessData)} method");
+```
+
+**예외 필터(Exception Filters):**
+
+```csharp
+// C# 5.0 - catch 블록 안에서 검사
+try
+{
+    await httpClient.GetAsync(url);
+}
+catch (HttpRequestException ex)
+{
+    if (ex.StatusCode == HttpStatusCode.NotFound)
+    {
+        // 처리...
+    }
+    else
+    {
+        throw;  // 다시 던짐
+    }
+}
+
+// C# 6.0 - when 절로 필터링
+try
+{
+    await httpClient.GetAsync(url);
+}
+catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+{
+    // 404일 때만 여기로
+}
+catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+{
+    // 401일 때만 여기로
+}
+
+// 로깅과 재throw
+catch (Exception ex) when (LogException(ex))
+{
+    // LogException이 항상 false를 반환하면 이 블록은 실행 안 됨
+    // 하지만 스택 트레이스는 보존됨!
+}
+
+bool LogException(Exception ex)
+{
+    logger.Error(ex);
+    return false;  // 항상 false를 반환하여 예외를 다시 던짐
+}
+```
+
+**인덱스 초기화 구문:**
+
+```csharp
+// C# 5.0
+var dict = new Dictionary<string, int>();
+dict.Add("one", 1);
+dict.Add("two", 2);
+
+// C# 6.0
+var dict = new Dictionary<string, int>
+{
+    ["one"] = 1,
+    ["two"] = 2,
+    ["three"] = 3
+};
+```
+
+**C# 6.0의 의의:**
+
+C# 6.0은 큰 기능 추가보다는 개발자 경험(DX)을 개선했습니다. 코드가 더 간결해지고, 읽기 쉬워지며, 안전해졌습니다. 이는 언어 설계의 성숙함을 보여주는 단계였습니다.
 
 ### C# 7.0 (2017년)
 
