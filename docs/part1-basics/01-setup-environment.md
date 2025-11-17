@@ -34,49 +34,15 @@ VS Code가 현대 개발자들의 필수 도구로 자리잡은 이유는 다음
 
 ### 운영체제별 설치 가이드
 
-VS Code의 설치 과정은 운영체제에 따라 약간씩 다릅니다. 각 플랫폼에 최적화된 설치 방법을 상세히 알아보겠습니다.
-
-#### Windows 환경에서의 설치
-
-Windows는 가장 널리 사용되는 데스크톱 운영체제로, VS Code 역시 Windows 환경에 완벽하게 최적화되어 있습니다.
-
-1. 웹 브라우저(Chrome, Edge, Firefox 등)를 실행하고 공식 홈페이지 <https://code.visualstudio.com/> 에 접속합니다.
-
-2. 메인 페이지에서 "Download for Windows" 버튼을 클릭합니다. 시스템이 자동으로 감지되어 Windows용 설치 파일이 다운로드됩니다.
-
-3. 다운로드가 완료되면 설치 파일(VSCodeUserSetup-{version}.exe)을 실행합니다.
-
-4. 설치 마법사가 시작되면 다음 단계를 진행합니다:
-   - 라이선스 동의서를 확인하고 "I accept the agreement" 옵션을 선택합니다.
-   - 설치 경로를 지정합니다. 특별한 이유가 없다면 기본 경로(`C:\Users\{사용자명}\AppData\Local\Programs\Microsoft VS Code`)를 권장합니다.
-   - 추가 작업 선택 화면에서 다음 옵션들을 체크하는 것을 강력히 권장합니다:
-     - ✅ **"Add to PATH"** (환경 변수에 추가): 명령 프롬프트나 PowerShell에서 `code` 명령어로 VS Code를 실행할 수 있게 합니다.
-     - ✅ **"Create a desktop icon"** (바탕화면 아이콘 생성): 빠른 실행을 위한 바탕화면 바로가기를 생성합니다.
-     - ✅ **"Register Code as an editor for supported file types"** (지원 파일 형식의 기본 에디터로 등록): 지원하는 파일 형식을 더블 클릭했을 때 VS Code로 자동 실행되도록 설정합니다.
-
-5. 모든 설정을 확인한 후 "Install" 버튼을 클릭하여 설치를 시작합니다. 설치는 일반적으로 1~2분 내에 완료됩니다.
-
-#### macOS 환경에서의 설치
-
-macOS 사용자를 위한 설치 과정은 매우 간단하며, Apple의 애플리케이션 관리 방식을 따릅니다.
-
-1. 웹 브라우저에서 <https://code.visualstudio.com/> 공식 홈페이지에 접속합니다.
-
-2. "Download for Mac" 버튼을 클릭하면 macOS용 .zip 압축 파일이 다운로드됩니다. Apple Silicon(M1, M2, M3 등) 또는 Intel 프로세서에 따라 적절한 버전이 자동으로 선택됩니다.
-
-3. 다운로드가 완료되면 .zip 파일을 더블 클릭하여 압축을 해제합니다. 자동으로 "Visual Studio Code.app" 애플리케이션 파일이 생성됩니다.
-
-4. 생성된 "Visual Studio Code.app" 파일을 **응용 프로그램(Applications)** 폴더로 드래그하여 이동시킵니다. 이는 macOS의 표준 애플리케이션 설치 방법입니다.
-
-5. Launchpad를 열거나 Spotlight 검색(`Cmd + Space`)을 통해 "Visual Studio Code"를 검색하여 실행합니다.
-
-6. 처음 실행 시 "확인되지 않은 개발자가 배포" 경고가 나타날 수 있습니다. 이 경우 시스템 환경설정 > 보안 및 개인 정보 보호에서 "확인 없이 열기"를 클릭하면 됩니다.
+VS Code의 설치 과정은 운영체제에 따라 약간씩 다릅니다. 이 책에서는 Linux 환경을 중심으로 설명하며, macOS 사용자를 위한 추가 정보도 제공합니다.
 
 #### Linux 환경에서의 설치
 
-Linux 사용자는 배포판에 따라 다양한 설치 방법을 선택할 수 있습니다. 여기서는 가장 널리 사용되는 Ubuntu/Debian 계열의 설치 방법을 소개합니다.
+Linux는 오픈소스 개발 환경의 중심이며, VS Code 역시 Linux에서 완벽하게 지원됩니다. 배포판에 따라 다양한 설치 방법을 선택할 수 있습니다.
 
-**패키지 매니저를 통한 설치 (권장):**
+**Ubuntu/Debian 계열 - 패키지 매니저를 통한 설치:**
+
+가장 간단하고 권장되는 방법입니다:
 
 ```bash
 # 시스템 패키지 목록 업데이트
@@ -88,7 +54,7 @@ sudo apt install code
 
 이 방법은 시스템의 패키지 관리자를 통해 설치되므로, 향후 `sudo apt upgrade` 명령으로 다른 패키지들과 함께 업데이트할 수 있다는 장점이 있습니다.
 
-**공식 저장소를 통한 설치 (최신 버전 보장):**
+**Ubuntu/Debian 계열 - 공식 저장소를 통한 설치 (최신 버전 보장):**
 
 최신 버전을 항상 유지하고 싶다면 Microsoft의 공식 패키지 저장소를 추가하는 방법을 사용할 수 있습니다:
 
@@ -108,7 +74,59 @@ sudo apt update
 sudo apt install code
 ```
 
+**Fedora, RHEL, CentOS 등의 RPM 기반 배포판:**
+
+```bash
+# Fedora의 경우
+sudo dnf install code
+
+# RHEL/CentOS의 경우
+sudo yum install code
+```
+
+**Arch Linux 및 파생 배포판:**
+
+```bash
+# pacman을 통한 설치
+sudo pacman -S code
+
+# 또는 AUR 헬퍼 사용 (예: yay)
+yay -S visual-studio-code-bin
+```
+
 더 자세한 배포판별 설치 가이드는 공식 문서 <https://code.visualstudio.com/docs/setup/linux> 에서 확인할 수 있습니다.
+
+#### macOS 환경에서의 설치
+
+macOS 사용자를 위한 설치 과정도 제공합니다. Apple의 애플리케이션 관리 방식을 따릅니다.
+
+**Homebrew를 사용한 설치 (권장):**
+
+Homebrew는 macOS의 사실상 표준 패키지 관리자입니다:
+
+```bash
+# Homebrew가 설치되어 있지 않다면 먼저 설치
+# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Visual Studio Code 설치
+brew install --cask visual-studio-code
+```
+
+**공식 설치 프로그램 사용:**
+
+1. 웹 브라우저에서 <https://code.visualstudio.com/> 공식 홈페이지에 접속합니다.
+
+2. "Download for Mac" 버튼을 클릭하면 macOS용 .zip 압축 파일이 다운로드됩니다. Apple Silicon(M1, M2, M3 등) 또는 Intel 프로세서에 따라 적절한 버전이 자동으로 선택됩니다.
+
+3. 다운로드가 완료되면 .zip 파일을 더블 클릭하여 압축을 해제합니다. 자동으로 "Visual Studio Code.app" 애플리케이션 파일이 생성됩니다.
+
+4. 생성된 "Visual Studio Code.app" 파일을 **응용 프로그램(Applications)** 폴더로 드래그하여 이동시킵니다.
+
+5. Launchpad를 열거나 Spotlight 검색(`Cmd + Space`)을 통해 "Visual Studio Code"를 검색하여 실행합니다.
+
+#### Windows 환경에서의 설치
+
+Windows에서도 Visual Studio Code를 설치하여 사용할 수 있습니다. 공식 홈페이지 <https://code.visualstudio.com/> 에서 Windows용 설치 파일을 다운로드하여 설치하면 됩니다.
 
 ### 설치 완료 확인 및 초기 설정
 
@@ -119,7 +137,7 @@ sudo apt install code
 2. **시작 화면 확인**: 정상적으로 실행되면 Welcome 화면이 표시됩니다. 이 화면에서는 새 파일 생성, 폴더 열기, 최근 프로젝트 등의 옵션을 확인할 수 있습니다.
 
 3. **명령 팔레트 테스트**: VS Code의 가장 강력한 기능 중 하나인 명령 팔레트(Command Palette)가 작동하는지 확인합니다:
-   - **Windows/Linux**: `Ctrl + Shift + P` 단축키를 누릅니다.
+   - **Linux**: `Ctrl + Shift + P` 단축키를 누릅니다.
    - **macOS**: `Cmd + Shift + P` 단축키를 누릅니다.
 
    명령 팔레트가 열리고 다양한 명령어를 검색할 수 있다면 설치가 성공적으로 완료된 것입니다.
@@ -144,54 +162,11 @@ sudo apt install code
 
 ### 운영체제별 설치 가이드
 
-.NET SDK의 설치 과정 역시 운영체제에 따라 다소 차이가 있습니다. 각 플랫폼에 최적화된 방법을 살펴보겠습니다.
-
-#### Windows 환경에서의 설치
-
-Windows는 .NET의 주요 개발 및 실행 플랫폼으로, Microsoft가 공식적으로 가장 먼저 지원하는 환경입니다.
-
-1. 웹 브라우저를 실행하고 .NET 공식 다운로드 페이지 <https://dotnet.microsoft.com/download> 에 접속합니다.
-
-2. 페이지에서 ".NET 10" 섹션을 찾습니다. 여러 버전이 나열되어 있다면 가장 최신 안정 버전(Stable)을 선택합니다.
-
-3. "Download .NET SDK x64" 버튼을 클릭하여 설치 파일을 다운로드합니다. 64비트 Windows를 사용하는 것이 일반적이지만, 32비트 시스템을 사용한다면 "x86" 버전을 선택해야 합니다.
-
-4. 다운로드한 설치 파일(dotnet-sdk-10.x.xxx-win-x64.exe)을 실행합니다.
-
-5. 설치 마법사가 시작되면 화면의 안내를 따라 진행합니다. 일반적으로 기본 설정을 유지하는 것이 좋으며, 설치는 자동으로 적절한 경로에 파일을 복사하고 환경 변수를 설정합니다.
-
-6. 설치가 완료되면 컴퓨터를 재시작하는 것을 권장합니다. 재시작을 통해 환경 변수 변경사항이 모든 프로세스에 올바르게 적용됩니다.
-
-#### macOS 환경에서의 설치
-
-macOS 사용자는 여러 가지 방법으로 .NET SDK를 설치할 수 있습니다.
-
-**Homebrew를 사용한 설치 (권장):**
-
-Homebrew는 macOS의 사실상 표준 패키지 관리자로, .NET SDK 설치 및 업데이트 관리를 매우 간편하게 만들어줍니다.
-
-```bash
-# Homebrew가 설치되어 있지 않다면 먼저 설치
-# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# .NET SDK 설치
-brew install dotnet-sdk
-```
-
-Homebrew를 통해 설치하면 `brew upgrade` 명령으로 간편하게 최신 버전으로 업데이트할 수 있습니다.
-
-**공식 설치 프로그램 사용:**
-
-Homebrew를 사용하지 않는다면, Microsoft의 공식 설치 프로그램을 다운로드할 수 있습니다:
-
-1. <https://dotnet.microsoft.com/download> 에 접속합니다.
-2. macOS용 .NET SDK 설치 프로그램(.pkg 파일)을 다운로드합니다.
-3. 다운로드한 .pkg 파일을 실행하고 화면의 지시를 따릅니다.
-4. 설치가 완료되면 터미널을 재시작하여 변경사항을 적용합니다.
+.NET SDK의 설치 과정은 운영체제에 따라 다소 차이가 있습니다. 이 책에서는 Linux 환경을 중심으로 설명하며, macOS 사용자를 위한 추가 정보도 제공합니다.
 
 #### Linux 환경에서의 설치
 
-Linux는 배포판이 매우 다양하므로, 여기서는 가장 널리 사용되는 Ubuntu/Debian 계열의 설치 방법을 중점적으로 다룹니다.
+Linux는 .NET 개발을 위한 강력한 플랫폼이며, 배포판이 매우 다양하므로 여기서는 가장 널리 사용되는 Ubuntu/Debian 계열의 설치 방법을 중심으로 다룹니다.
 
 **Ubuntu 22.04 LTS에서의 설치:**
 
@@ -214,7 +189,7 @@ sudo apt install -y dotnet-sdk-10.0
 
 **다른 Ubuntu 버전 또는 Debian의 경우**, 첫 번째 wget 명령의 URL에서 `ubuntu/22.04` 부분을 해당하는 버전으로 변경해야 합니다. 예를 들어, Ubuntu 24.04의 경우 `ubuntu/24.04`로, Debian 12의 경우 `debian/12`로 변경합니다.
 
-**Fedora, RHEL, CentOS 등의 RPM 기반 배포판**을 사용하는 경우, 다음과 같은 방법을 사용합니다:
+**Fedora, RHEL, CentOS 등의 RPM 기반 배포판:**
 
 ```bash
 # Fedora의 경우
@@ -223,6 +198,49 @@ sudo dnf install dotnet-sdk-10.0
 # RHEL/CentOS의 경우
 sudo yum install dotnet-sdk-10.0
 ```
+
+**Arch Linux 및 파생 배포판:**
+
+```bash
+# pacman을 통한 설치
+sudo pacman -S dotnet-sdk
+
+# 또는 AUR 헬퍼 사용 (예: yay)
+yay -S dotnet-sdk-bin
+```
+
+더 자세한 배포판별 설치 가이드는 공식 문서 <https://learn.microsoft.com/dotnet/core/install/linux> 에서 확인할 수 있습니다.
+
+#### macOS 환경에서의 설치
+
+macOS 사용자를 위한 설치 방법도 제공합니다.
+
+**Homebrew를 사용한 설치 (권장):**
+
+Homebrew는 macOS의 사실상 표준 패키지 관리자입니다:
+
+```bash
+# Homebrew가 설치되어 있지 않다면 먼저 설치
+# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# .NET SDK 설치
+brew install dotnet-sdk
+```
+
+Homebrew를 통해 설치하면 `brew upgrade` 명령으로 간편하게 최신 버전으로 업데이트할 수 있습니다.
+
+**공식 설치 프로그램 사용:**
+
+Homebrew를 사용하지 않는다면, Microsoft의 공식 설치 프로그램을 다운로드할 수 있습니다:
+
+1. <https://dotnet.microsoft.com/download> 에 접속합니다.
+2. macOS용 .NET SDK 설치 프로그램(.pkg 파일)을 다운로드합니다.
+3. 다운로드한 .pkg 파일을 실행하고 화면의 지시를 따릅니다.
+4. 설치가 완료되면 터미널을 재시작하여 변경사항을 적용합니다.
+
+#### Windows 환경에서의 설치
+
+Windows에서도 .NET SDK를 설치하여 사용할 수 있습니다. 공식 다운로드 페이지 <https://dotnet.microsoft.com/download> 에서 Windows용 설치 파일을 다운로드하여 설치하면 됩니다.
 
 ### 설치 확인 및 검증
 
@@ -303,11 +321,11 @@ dotnet --help
 
 ## 1.3 C# 확장 프로그램 설치
 
-Visual Studio Code의 진정한 강점은 바로 방대한 확장 프로그램 생태계에 있습니다. 기본 상태의 VS Code는 범용 텍스트 에디터이지만, 적절한 확장 프로그램을 설치함으로써 특정 언어에 최적화된 전문 개발 환경으로 변모할 수 있습니다. C# 개발을 위해서는 Microsoft가 공식적으로 제공하는 확장 프로그램들을 설치해야 하며, 이들은 코드 자동 완성, 실시간 오류 검사, 디버깅, 리팩토링 등 전문적인 개발에 필수적인 기능들을 제공합니다.
+Visual Studio Code의 진정한 강점은 바로 방대한 확장 프로그램 생태계에 있습니다. 기본 상태의 VS Code는 범용 텍스트 에디터이지만, 적절한 확장 프로그램을 설치함으로써 특정 언어에 최적화된 전문 개발 환경으로 변모할 수 있습니다. C# 개발을 위해서는 Microsoft가 공식적으로 제공하는 C# 확장 프로그램을 설치해야 하며, 이는 코드 자동 완성, 실시간 오류 검사, 디버깅, 리팩토링 등 전문적인 개발에 필수적인 기능들을 제공합니다.
 
-### C# Dev Kit - 공식 통합 개발 환경
+### C# 확장 프로그램 - 공식 언어 지원
 
-Microsoft에서 공식적으로 제공하는 **C# Dev Kit**는 Visual Studio Code에서 C# 개발을 위한 가장 포괄적이고 통합된 솔루션입니다. 이 확장 패키지는 여러 개의 핵심 확장 프로그램들을 하나의 번들로 제공하여, 번거로운 개별 설치 과정 없이 완전한 C# 개발 환경을 구축할 수 있게 해줍니다.
+Microsoft에서 공식적으로 제공하는 **C# 확장 프로그램**은 Visual Studio Code에서 C# 개발을 위한 핵심 도구입니다. 이 확장은 OmniSharp 언어 서버를 통해 C# 언어 서비스의 핵심 기능을 제공합니다.
 
 #### 설치 절차
 
@@ -316,20 +334,20 @@ VS Code 확장 마켓플레이스를 통한 설치 과정은 다음과 같습니
 1. **Visual Studio Code를 실행**합니다.
 
 2. **확장(Extensions) 뷰를 엽니다**. 좌측 사이드바에서 확장 아이콘(블록 모양)을 클릭하거나, 다음 단축키를 사용합니다:
-   - Windows/Linux: `Ctrl + Shift + X`
+   - Linux: `Ctrl + Shift + X`
    - macOS: `Cmd + Shift + X`
 
-3. **검색창에 "C# Dev Kit"를 입력**합니다. 여러 검색 결과가 나타나지만, 제작자가 "Microsoft"로 표시된 공식 확장을 선택해야 합니다.
+3. **검색창에 "C#"를 입력**합니다. 여러 검색 결과가 나타나지만, 제작자가 "Microsoft"로 표시된 공식 확장을 선택해야 합니다.
 
-4. **"Install" 버튼을 클릭**하여 설치를 시작합니다. C# Dev Kit는 의존성이 있는 다른 확장 프로그램들(C# 기본 확장, IntelliCode 등)도 자동으로 함께 설치합니다.
+4. **"Install" 버튼을 클릭**하여 설치를 시작합니다.
 
 5. 설치가 완료되면, 필요한 경우 VS Code를 다시 로드하라는 메시지가 표시될 수 있습니다. **"Reload Required" 또는 "Reload" 버튼**을 클릭하여 변경사항을 적용합니다.
 
-6. 첫 실행 시, C# Dev Kit는 추가 구성 요소(OmniSharp 언어 서버 등)를 다운로드할 수 있습니다. 이는 백그라운드에서 자동으로 진행되므로, 상태 표시줄의 진행 상황을 확인하면서 기다립니다.
+6. 첫 실행 시, C# 확장은 추가 구성 요소(OmniSharp 언어 서버 등)를 다운로드할 수 있습니다. 이는 백그라운드에서 자동으로 진행되므로, 상태 표시줄의 진행 상황을 확인하면서 기다립니다.
 
-#### C# Dev Kit의 핵심 기능
+#### C# 확장 프로그램의 핵심 기능
 
-C# Dev Kit는 전문적인 C# 개발을 위한 다음과 같은 강력한 기능들을 제공합니다:
+C# 확장 프로그램은 전문적인 C# 개발을 위한 다음과 같은 강력한 기능들을 제공합니다:
 
 - **IntelliSense (지능형 코드 완성)**: 코드를 입력하는 동안 실시간으로 컨텍스트를 분석하여 적절한 메서드, 속성, 변수 이름을 제안합니다. 이는 단순한 자동 완성을 넘어, 타입 정보와 문서까지 함께 표시하여 개발 속도를 크게 향상시킵니다.
 
@@ -339,41 +357,44 @@ C# Dev Kit는 전문적인 C# 개발을 위한 다음과 같은 강력한 기능
 
 - **코드 탐색 기능**: "정의로 이동(Go to Definition)", "모든 참조 찾기(Find All References)", "구현으로 이동(Go to Implementation)" 등의 기능을 통해 대규모 코드베이스에서도 효율적으로 탐색할 수 있습니다.
 
-- **리팩토링 도구**: 변수 이름 변경, 메서드 추출, 인터페이스 추출 등 코드 구조를 개선하는 자동화된 리팩토링 기능을 제공합니다. 이는 코드 품질을 유지하면서 안전하게 수정할 수 있게 해줍니다.
+- **리팩토링 도구**: 변수 이름 변경, 메서드 추출 등 코드 구조를 개선하는 자동화된 리팩토링 기능을 제공합니다. 이는 코드 품질을 유지하면서 안전하게 수정할 수 있게 해줍니다.
 
-- **단위 테스트 통합**: xUnit, NUnit, MSTest 등 주요 테스트 프레임워크를 지원하며, 테스트 탐색기를 통해 테스트를 실행하고 결과를 확인할 수 있습니다.
+### VS Code 호환 에디터에서 C# 확장 사용하기
 
-- **프로젝트 시스템 지원**: 솔루션(.sln)과 프로젝트(.csproj) 파일을 인식하고 관리하며, 프로젝트 간 참조와 종속성을 이해합니다.
+C# 확장 프로그램은 Visual Studio Code뿐만 아니라 VS Code를 기반으로 한 다양한 서드파티 IDE에서도 사용할 수 있습니다. 다음과 같은 에디터들이 C# 확장을 지원합니다:
+
+- **VS Codium**: 완전히 오픈소스로 구성된 VS Code의 대체 버전
+- **Cursor**: AI 기반 코드 편집 기능이 강화된 에디터
+- **Windsurf**: Codeium의 AI 기반 통합 개발 환경
+- **Kiro**: 경량화된 코드 에디터
+- **Trae**: 협업 중심의 개발 환경
+- **Eclipse Theia**: 클라우드 및 데스크톱용 확장 가능한 IDE 플랫폼
+
+이러한 에디터들은 VS Code의 확장 시스템을 공유하므로, 동일한 C# 확장 프로그램을 설치하여 사용할 수 있습니다. 다만, 일부 에디터의 경우 Microsoft 마켓플레이스 대신 Open VSX 레지스트리를 사용할 수 있으며, 이 경우 [vscode-csharp-autobuild](https://github.com/rkttu/vscode-csharp-autobuild) 프로젝트에서 제공하는 빌드를 활용할 수 있습니다.
 
 ### 생산성 향상을 위한 추가 확장 프로그램
 
-C# Dev Kit는 필수 기능을 모두 제공하지만, 다음의 추가 확장 프로그램들은 개발 경험을 더욱 풍부하게 만들어줍니다. 이들은 선택사항이지만, 많은 전문 개발자들이 애용하는 도구들입니다.
+C# 확장은 필수 기능을 모두 제공하지만, 다음의 추가 확장 프로그램들은 개발 경험을 더욱 풍부하게 만들어줍니다. 이들은 선택사항이지만, 많은 전문 개발자들이 애용하는 도구들입니다.
 
-#### 1. C# (기본 언어 지원)
-
-- **검색어**: "C#"
-- **제공자**: Microsoft
-- **설명**: C# Dev Kit를 설치하면 자동으로 함께 설치되는 기본 확장입니다. C# 언어 서비스의 핵심을 담당하며, OmniSharp 언어 서버를 통해 코드 분석과 IntelliSense 기능을 제공합니다.
-
-#### 2. NuGet Package Manager
+#### 1. NuGet Package Manager
 
 - **검색어**: "NuGet Package Manager"
 - **제공자**: jmrog
 - **설명**: NuGet은 .NET의 패키지 관리 시스템으로, 수많은 오픈소스 라이브러리를 제공합니다. 이 확장은 VS Code 내에서 직접 NuGet 패키지를 검색하고, 설치하며, 업데이트할 수 있는 GUI를 제공합니다. 명령 팔레트에서 "NuGet"을 검색하여 사용할 수 있습니다.
 
-#### 3. Better Comments
+#### 2. Better Comments
 
 - **검색어**: "Better Comments"
 - **제공자**: Aaron Bond
 - **설명**: 주석을 카테고리별로 색상 코딩하여 가독성을 향상시킵니다. 예를 들어, TODO, FIXME, !, ? 등의 특수 표시를 인식하여 각각 다른 색상으로 강조 표시합니다. 이는 코드의 중요한 주석을 빠르게 식별하는 데 도움이 됩니다.
 
-#### 4. Error Lens
+#### 3. Error Lens
 
 - **검색어**: "Error Lens"
 - **제공자**: Alexander
 - **설명**: 컴파일 오류와 경고를 해당 코드 라인 옆에 직접 표시하여 문제를 즉시 인식할 수 있게 합니다. 전통적인 방식은 문제 패널이나 에디터 스크롤바의 표시에 의존했지만, Error Lens는 오류 메시지를 코드와 함께 인라인으로 보여주어 디버깅 효율을 크게 높입니다.
 
-#### 5. GitLens (선택적, 버전 관리 사용 시)
+#### 4. GitLens (선택적, 버전 관리 사용 시)
 
 - **검색어**: "GitLens"
 - **제공자**: GitKraken
@@ -381,9 +402,9 @@ C# Dev Kit는 필수 기능을 모두 제공하지만, 다음의 추가 확장 �
 
 ### 확장 프로그램 정상 작동 확인
 
-설치가 완료되었다면, 다음 절차를 통해 C# 확장 프로그램들이 올바르게 작동하는지 확인할 수 있습니다:
+설치가 완료되었다면, 다음 절차를 통해 C# 확장 프로그램이 올바르게 작동하는지 확인할 수 있습니다:
 
-1. **Visual Studio Code에서 새 파일을 생성**합니다. 파일 탐색기에서 "New File" 아이콘을 클릭하거나 `Ctrl+N` (Windows/Linux) / `Cmd+N` (macOS)를 누릅니다.
+1. **Visual Studio Code에서 새 파일을 생성**합니다. 파일 탐색기에서 "New File" 아이콘을 클릭하거나 `Ctrl+N` (Linux) / `Cmd+N` (macOS)를 누릅니다.
 
 2. **파일 이름을 `test.cs`로 지정**하고 저장합니다. `.cs` 확장자는 C# 소스 파일을 나타내며, VS Code가 이를 인식하여 C# 언어 모드로 전환됩니다.
 
@@ -427,18 +448,18 @@ File-based App 방식은 C# 언어의 진화를 대표하는 기능으로, 다�
 
 #### 1단계: 작업 공간 디렉토리 생성
 
-체계적인 학습을 위해 모든 실습 파일을 저장할 전용 디렉토리를 만드는 것이 좋습니다. 운영체제의 명령줄 인터페이스를 통해 다음과 같이 작업 폴더를 생성합니다:
+체계적인 학습을 위해 모든 실습 파일을 저장할 전용 디렉토리를 만드는 것이 좋습니다. 터미널을 통해 다음과 같이 작업 폴더를 생성합니다:
 
-**Windows (명령 프롬프트 또는 PowerShell):**
+**Linux:**
 ```bash
-# C 드라이브에 실습 폴더 생성
-mkdir C:\CSharp-Practice
+# 홈 디렉토리에 실습 폴더 생성
+mkdir ~/CSharp-Practice
 
 # 생성한 폴더로 이동
-cd C:\CSharp-Practice
+cd ~/CSharp-Practice
 ```
 
-**macOS/Linux (Terminal):**
+**macOS:**
 ```bash
 # 홈 디렉토리에 실습 폴더 생성
 mkdir ~/CSharp-Practice
@@ -618,7 +639,7 @@ Visual Studio Code의 통합 터미널은 에디터와 완벽하게 통합되어
 
 1. **통합 터미널 열기**:
    - 상단 메뉴에서 **"Terminal" > "New Terminal"** 선택
-   - 또는 단축키 ``Ctrl + ` `` (Windows/Linux) / ``Cmd + ` `` (macOS) 사용
+   - 또는 단축키 ``Ctrl + ` `` (Linux) / ``Cmd + ` `` (macOS) 사용
    - 백틱(`)은 키보드의 숫자 1 왼쪽, Tab 키 위에 위치합니다
 
 2. **터미널이 올바른 디렉토리에 있는지 확인**:
