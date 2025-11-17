@@ -58,6 +58,8 @@ Visual Studio Code와 .NET 10 File-based App을 활용한 C# 프로그래밍 학
 
 ## 시작하기
 
+### C# 프로그래밍 시작하기
+
 ```bash
 # .NET 10 설치 확인
 dotnet --version
@@ -65,6 +67,42 @@ dotnet --version
 # 첫 번째 C# 프로그램 만들기
 echo 'Console.WriteLine("Hello, C#!");' > Program.cs
 dotnet run
+```
+
+### 로컬에서 웹사이트 빌드하기
+
+이 리포지터리는 mkdocs-material을 사용하여 정적 웹사이트를 생성합니다.
+
+```bash
+# Python 3.12 이상 필요
+python3 --version
+
+# 의존성 설치
+pip install -r requirements.txt
+
+# 로컬 개발 서버 실행 (http://127.0.0.1:8000)
+mkdocs serve
+
+# 정적 사이트 빌드
+mkdocs build
+```
+dotnet run
+```
+
+## 프로젝트 구조
+
+```
+csharp-book/
+├── docs/                    # 문서 소스 파일 (Markdown)
+│   ├── index.md            # 홈페이지
+│   ├── 01-개발환경구축.md   # 각 장의 내용
+│   ├── ...
+│   └── stylesheets/        # 커스텀 CSS
+├── .github/
+│   └── workflows/          # GitHub Actions 워크플로우
+├── mkdocs.yml              # MkDocs 설정 파일
+├── requirements.txt        # Python 의존성
+└── README.md               # 이 파일
 ```
 
 ## 라이선스
