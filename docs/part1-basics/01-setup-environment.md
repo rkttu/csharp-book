@@ -142,7 +142,7 @@ Windows에서도 Visual Studio Code를 설치하여 사용할 수 있습니다. 
 
    명령 팔레트가 열리고 다양한 명령어를 검색할 수 있다면 설치가 성공적으로 완료된 것입니다.
 
-4. **기본 설정 탐색**: 처음 사용하는 경우, File > Preferences > Settings (Windows/Linux) 또는 Code > Preferences > Settings (macOS)에서 테마, 글꼴 크기, 편집기 동작 등을 자신의 선호도에 맞게 조정할 수 있습니다.
+4. **기본 설정 탐색**: 처음 사용하는 경우, File > Preferences > Settings (Linux) 또는 Code > Preferences > Settings (macOS)에서 테마, 글꼴 크기, 편집기 동작 등을 자신의 선호도에 맞게 조정할 수 있습니다.
 
 ---
 
@@ -248,7 +248,7 @@ Windows에서도 .NET SDK를 설치하여 사용할 수 있습니다. 공식 다
 
 **기본 버전 확인:**
 
-터미널(Windows의 경우 명령 프롬프트 또는 PowerShell, macOS/Linux의 경우 Terminal)을 열고 다음 명령어를 실행합니다:
+터미널(Linux/macOS의 경우 Terminal)을 열고 다음 명령어를 실행합니다:
 
 ```bash
 dotnet --version
@@ -279,11 +279,11 @@ dotnet --info
  Workload version:  10.0.100-manifests.abc1234
 
 Runtime Environment:
- OS Name:           Windows
- OS Version:        10.0.22631
- OS Platform:       Windows
- RID:               win-x64
- Base Path:         C:\Program Files\dotnet\sdk\10.0.100\
+ OS Name:           Ubuntu
+ OS Version:        22.04
+ OS Platform:       Linux
+ RID:               linux-x64
+ Base Path:         /usr/share/dotnet/sdk/10.0.100/
 
 Host:
   Version:         10.0.0
@@ -291,12 +291,11 @@ Host:
   Commit:          abc1234def
 
 .NET SDKs installed:
-  10.0.100 [C:\Program Files\dotnet\sdk]
+  10.0.100 [/usr/share/dotnet/sdk]
 
 .NET runtimes installed:
-  Microsoft.AspNetCore.App 10.0.0 [C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App]
-  Microsoft.NETCore.App 10.0.0 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
-  Microsoft.WindowsDesktop.App 10.0.0 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]
+  Microsoft.AspNetCore.App 10.0.0 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.NETCore.App 10.0.0 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
 ```
 
 이 출력에서 다음 정보들을 확인할 수 있습니다:
@@ -305,7 +304,7 @@ Host:
 - **Runtime Environment**: 운영체제 정보와 플랫폼 식별자(RID)
 - **Base Path**: SDK가 설치된 실제 경로
 - **Installed SDKs**: 시스템에 설치된 모든 SDK 버전 목록
-- **Installed Runtimes**: 사용 가능한 런타임 목록 (Core, ASP.NET Core, Windows Desktop 등)
+- **Installed Runtimes**: 사용 가능한 런타임 목록 (Core, ASP.NET Core 등)
 
 ### CLI 도구 탐색
 
@@ -984,7 +983,7 @@ Console.WriteLine($"섭씨 {celsius}도는 화씨 {fahrenheit}도입니다.");
 
 2. **.NET 10 SDK**: C# 애플리케이션을 컴파일하고 실행하는 데 필요한 모든 도구와 라이브러리를 포함하는 소프트웨어 개발 키트입니다. 장기 지원(LTS) 버전으로, 향후 수년간 안정적인 업데이트가 보장됩니다.
 
-3. **C# Dev Kit 확장**: Visual Studio Code를 C# 전문 개발 환경으로 변모시키는 필수 확장 프로그램입니다. IntelliSense, 디버깅, 리팩토링 등 전문적인 개발에 필요한 모든 기능을 제공합니다.
+3. **C# 확장 프로그램**: Visual Studio Code를 C# 전문 개발 환경으로 변모시키는 필수 확장 프로그램입니다. IntelliSense, 디버깅, 리팩토링 등 전문적인 개발에 필요한 모든 기능을 제공합니다. VS Code뿐만 아니라 VS Codium, Cursor, Windsurf 등 다양한 호환 에디터에서도 사용할 수 있습니다.
 
 4. **File-based App 패러다임**: .NET 10의 혁신적인 기능으로, 복잡한 프로젝트 구조 없이 단일 `.cs` 파일만으로 완전한 C# 프로그램을 작성하고 실행할 수 있게 합니다. 학습과 빠른 프로토타이핑에 이상적입니다.
 
