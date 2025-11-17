@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ page.canonical_url }}">
+  <meta property="og:title" content="{{ page.title }} - {{ config.site_name }}">
+  <meta property="og:description" content="{{ config.site_description }}">
+  <meta property="og:image" content="{{ config.site_url }}assets/images/social-card.png">
+  <meta property="og:locale" content="ko_KR">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="{{ page.canonical_url }}">
+  <meta property="twitter:title" content="{{ page.title }} - {{ config.site_name }}">
+  <meta property="twitter:description" content="{{ config.site_description }}">
+  <meta property="twitter:image" content="{{ config.site_url }}assets/images/social-card.png">
+  
+  <!-- Additional SEO -->
+  <meta name="keywords" content="C#, CSharp, 프로그래밍, .NET, Visual Studio Code, 학습, 튜토리얼">
+  <meta name="author" content="{{ config.site_author }}">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="{{ page.canonical_url }}">
+{% endblock %}
