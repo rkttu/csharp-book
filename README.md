@@ -1,4 +1,4 @@
-# 메모장으로 코딩하는 C#
+# 메모장으로 코딩하는 C\#
 
 Visual Studio Code와 .NET 10 File-based App을 활용한 C# 프로그래밍 학습서
 
@@ -86,12 +86,10 @@ mkdocs serve
 # 정적 사이트 빌드
 mkdocs build
 ```
-dotnet run
-```
 
 ## 프로젝트 구조
 
-```
+```text
 csharp-book/
 ├── docs/                    # 문서 소스 파일 (Markdown)
 │   ├── index.md            # 홈페이지
