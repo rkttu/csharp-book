@@ -1,0 +1,1671 @@
+# 5장. 컬렉션
+
+4장에서 배열을 배워 여러 데이터를 하나로 묶어 관리하는 방법을 익혔습니다. 하지만 배열에는 한 가지 큰 제약이 있습니다. 바로 크기가 고정되어 있다는 점입니다. 배열을 생성할 때 크기를 정하면, 나중에 요소를 추가하거나 제거할 수 없습니다.
+
+실제 프로그램에서는 데이터의 개수가 실행 중에 변하는 경우가 많습니다. 이럴 때 필요한 것이 **컬렉션(Collections)**입니다. 컬렉션은 크기가 자동으로 조절되며, 요소를 추가하거나 제거할 수 있는 유연한 자료구조입니다.
+
+## 이 장에서 배울 내용
+
+- `List<T>`: 크기가 자동으로 조절되는 동적 배열
+- `Dictionary<TKey, TValue>`: 키와 값을 쌍으로 저장하는 자료구조
+- 기타 유용한 컬렉션들 (`HashSet`, `Queue`, `Stack`)
+
+---
+
+## 5.1 List<T>
+
+`List<T>`는 C# 컬렉션 프레임워크에서 가장 널리 사용되는 자료구조로, 컴퓨터 과학에서 **동적 배열(Dynamic Array)** 또는 **가변 크기 배열(Resizable Array)**로 알려진 개념의 .NET 구현입니다. 이는 배열의 빠른 인덱스 접근(O(1))이라는 장점을 유지하면서도, 고정 크기라는 제약을 극복한 혁신적인 데이터 구조입니다.
+
+**제네릭 타입 매개변수 `<T>`의 의미:**
+
+`T`는 Type의 약자로, 제네릭 프로그래밍(Generic Programming)의 핵심 개념인 **타입 매개변수(Type Parameter)**를 나타냅니다. 이는 C++ 템플릿(Template)과 Java 제네릭(Generics)의 개념을 계승하면서도, C#만의 독특한 특성을 가지고 있습니다:
+
+- **컴파일 타임 타입 안정성**: `List<int>`는 정수만, `List<string>`은 문자열만 저장할 수 있으며, 이는 컴파일 시점에 강제됩니다.
+- **박싱/언박싱 제거**: 제네릭 이전의 `ArrayList`와 달리, 값 타입을 저장할 때 성능 저하를 유발하는 박싱(Boxing) 작업이 발생하지 않습니다.
+- **코드 재사용성**: 하나의 코드로 모든 타입에 대해 동작하는 타입 안전한 컬렉션을 만들 수 있습니다.
+
+**내부 구조와 작동 원리:**
+
+`List<T>`는 내부적으로 `T` 타입의 배열을 유지하며, 다음과 같은 핵심 속성을 관리합니다:
+
+- **Capacity (용량)**: 내부 배열의 현재 크기로, 실제 할당된 메모리 공간을 나타냅니다.
+- **Count (개수)**: 실제로 저장된 요소의 개수로, 항상 Capacity 이하입니다.
+
+요소를 추가하다가 Count가 Capacity에 도달하면, List는 자동으로 더 큰 배열을 할당하고 기존 요소들을 복사합니다. 이 때 일반적으로 용량을 2배로 늘리는 **기하급수적 확장(Exponential Growth)** 전략을 사용하여, 분할 상환 분석(Amortized Analysis) 관점에서 추가 연산의 평균 시간 복잡도를 O(1)로 유지합니다. 이는 알고리즘 설계의 중요한 최적화 기법입니다.
+
+**기본 생성과 초기화:**
+
+C#은 List를 생성하는 여러 방법을 제공하며, 각각은 상황에 따라 적절히 선택해야 합니다:
+
+```csharp
+// 1. 빈 리스트 생성 (기본 용량: 0, 첫 추가 시 4로 설정됨)
+List<int> numbers = new List<int>();
+
+// 2. 초기 용량 지정 (요소 개수를 예측할 수 있을 때 성능 최적화)
+List<int> numbersWithCapacity = new List<int>(100);  // 100개 요소 공간 미리 확보
+
+// 3. 컬렉션 초기화 구문 (Collection Initializer)
+List<string> fruits = new List<string> { "사과", "바나나", "오렌지" };
+
+// 4. var 키워드를 통한 타입 추론 (C# 3.0+)
+var cities = new List<string> { "서울", "부산", "대구" };
+
+// 5. 기존 컬렉션으로부터 생성 (얕은 복사, Shallow Copy)
+string[] fruitArray = { "포도", "딸기", "수박" };
+List<string> moreFruits = new List<string>(fruitArray);
+
+Console.WriteLine($"과일 개수: {fruits.Count}");  // 출력: 과일 개수: 3
+Console.WriteLine($"용량: {fruits.Capacity}");     // 출력: 용량: 4 (내부 배열 크기)
+```
+
+**초기 용량 설정의 중요성:**
+
+요소를 추가할 때마다 용량이 부족하면 배열 재할당과 복사가 발생합니다. 만약 최종적으로 1000개의 요소를 저장할 것을 알고 있다면, `new List<int>(1000)`으로 초기화하여 불필요한 재할당을 방지할 수 있습니다. 이는 특히 대용량 데이터를 다루거나 성능이 중요한 상황에서 큰 차이를 만듭니다.
+
+**주요 특징과 성능 특성:**
+
+| 특성 | 설명 | 시간 복잡도 |
+|------|------|-------------|
+| **동적 크기** | 요소 추가/제거 시 자동으로 크기 조정 | 분할 상환 O(1) |
+| **인덱스 접근** | 배열처럼 `[index]`로 직접 접근 | O(1) |
+| **순차 접근** | 메모리 연속성으로 캐시 효율성 우수 | O(n) |
+| **타입 안정성** | 컴파일 타임에 타입 검증 | - |
+| **Null 허용** | 참조 타입의 경우 null 저장 가능 | - |
+
+**배열 vs List<T> 비교:**
+
+| 측면 | Array | List<T> |
+|------|-------|---------|
+| 크기 | 고정 (선언 시 결정) | 동적 (자동 조정) |
+| 성능 | 약간 더 빠름 (오버헤드 없음) | 매우 약간 느림 (용량 관리) |
+| 메모리 | 정확한 크기만 사용 | 여유 공간 가능 (Capacity > Count) |
+| 기능 | 기본적인 연산만 | 풍부한 메서드 제공 |
+| 다차원 | 다차원 배열 지원 | 1차원만 (중첩 가능) |
+| 사용 권장 | 크기 고정, 성능 극대화 | 대부분의 일반적 상황 |
+
+### 5.1.1 요소 추가 및 제거
+
+List의 가장 기본적이면서도 중요한 연산은 요소를 추가하고 제거하는 것입니다. 이러한 연산들의 시간 복잡도와 내부 동작을 이해하면, 성능을 고려한 효율적인 코드를 작성할 수 있습니다.
+
+**요소 추가의 다양한 방법과 성능 특성:**
+
+List는 요소를 추가하는 여러 메서드를 제공하며, 각각은 서로 다른 사용 사례와 성능 특성을 가집니다:
+
+```csharp
+List<int> numbers = new List<int>();
+
+// 1. Add() - 끝에 단일 요소 추가
+// 시간 복잡도: 분할 상환 O(1), 최악의 경우 O(n) (재할당 시)
+numbers.Add(10);
+numbers.Add(20);
+numbers.Add(30);
+
+Console.WriteLine($"개수: {numbers.Count}");  // 출력: 개수: 3
+Console.WriteLine($"용량: {numbers.Capacity}");  // 출력: 용량: 4
+
+// 2. AddRange() - 여러 요소를 한 번에 추가
+// 시간 복잡도: O(m), m은 추가되는 요소의 개수
+// 장점: 용량 확장이 필요한 경우 한 번만 수행
+numbers.AddRange(new int[] { 40, 50, 60 });
+Console.WriteLine($"개수: {numbers.Count}");  // 출력: 개수: 6
+
+// 3. Insert() - 특정 위치에 삽입
+// 시간 복잡도: O(n), 삽입 위치 이후의 모든 요소를 한 칸씩 이동
+numbers.Insert(0, 5);  // 인덱스 0에 5 삽입
+Console.WriteLine($"첫 번째 요소: {numbers[0]}");  // 출력: 첫 번째 요소: 5
+
+// 4. InsertRange() - 특정 위치에 여러 요소 삽입
+numbers.InsertRange(1, new int[] { 7, 8, 9 });
+```
+
+**성능 최적화 전략:**
+
+Add 연산은 대부분 매우 빠르지만, 용량이 부족할 때는 내부 배열을 재할당해야 하므로 O(n) 시간이 소요됩니다. 이를 방지하기 위한 전략:
+
+```csharp
+// 나쁜 예: 반복적인 재할당 발생 가능
+List<int> badExample = new List<int>();  // 초기 용량: 0
+for (int i = 0; i < 10000; i++)
+{
+    badExample.Add(i);  // 여러 번 재할당 발생
+}
+
+// 좋은 예: 미리 용량 확보
+List<int> goodExample = new List<int>(10000);  // 초기 용량: 10000
+for (int i = 0; i < 10000; i++)
+{
+    goodExample.Add(i);  // 재할당 없음
+}
+
+// 또는 Capacity 속성으로 동적 조정
+List<int> dynamicExample = new List<int>();
+dynamicExample.Capacity = 10000;  // 명시적 용량 설정
+```
+
+**요소 제거의 다양한 방법:**
+
+제거 연산은 추가보다 더 신중하게 다뤄야 합니다. 특히 반복문 내에서 제거할 때는 인덱스 변화에 주의해야 합니다.
+
+```csharp
+List<string> fruits = new List<string> { "사과", "바나나", "오렌지", "포도", "바나나" };
+
+// 1. Remove() - 값으로 제거 (첫 번째 일치 항목만)
+// 시간 복잡도: O(n), 요소를 찾고 이후 요소들을 이동
+bool removed = fruits.Remove("바나나");
+Console.WriteLine($"제거 성공: {removed}");  // 출력: 제거 성공: True
+Console.WriteLine(string.Join(", ", fruits));  // 출력: 사과, 오렌지, 포도, 바나나
+
+// 2. RemoveAt() - 인덱스로 제거
+// 시간 복잡도: O(n), 제거 후 이후 요소들을 앞으로 이동
+fruits.RemoveAt(0);  // 첫 번째 요소 제거
+Console.WriteLine(string.Join(", ", fruits));  // 출력: 오렌지, 포도, 바나나
+
+// 3. RemoveRange() - 범위 제거
+// 시간 복잡도: O(n)
+List<int> numbers2 = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+numbers2.RemoveRange(2, 3);  // 인덱스 2부터 3개 제거
+Console.WriteLine(string.Join(", ", numbers2));  // 출력: 1, 2, 6, 7, 8, 9, 10
+
+// 4. RemoveAll() - 조건에 맞는 모든 요소 제거
+// 시간 복잡도: O(n), 한 번의 순회로 모든 조건 검사 및 제거
+List<int> numbers3 = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+int removedCount = numbers3.RemoveAll(n => n % 2 == 0);  // 짝수 모두 제거
+Console.WriteLine($"제거된 개수: {removedCount}");  // 출력: 제거된 개수: 5
+Console.WriteLine(string.Join(", ", numbers3));  // 출력: 1, 3, 5, 7, 9
+
+// 5. Clear() - 모든 요소 제거
+// 시간 복잡도: O(n) (참조 타입의 경우 GC를 위해 null로 설정)
+fruits.Clear();
+Console.WriteLine($"개수: {fruits.Count}");  // 출력: 개수: 0
+Console.WriteLine($"용량: {fruits.Capacity}");  // 용량은 유지됨
+```
+
+**반복 중 제거 시 주의사항:**
+
+List를 순회하면서 요소를 제거하는 것은 흔한 실수의 원인입니다:
+
+```csharp
+List<int> numbers4 = new List<int> { 1, 2, 3, 4, 5 };
+
+// ❌ 잘못된 방법 - IndexOutOfRangeException 가능성
+for (int i = 0; i < numbers4.Count; i++)
+{
+    if (numbers4[i] % 2 == 0)
+    {
+        numbers4.RemoveAt(i);  // 제거 후 Count와 인덱스가 어긋남
+    }
+}
+
+// ✅ 올바른 방법 1 - 뒤에서부터 순회
+List<int> numbers5 = new List<int> { 1, 2, 3, 4, 5 };
+for (int i = numbers5.Count - 1; i >= 0; i--)
+{
+    if (numbers5[i] % 2 == 0)
+    {
+        numbers5.RemoveAt(i);
+    }
+}
+
+// ✅ 올바른 방법 2 - RemoveAll 사용 (가장 권장)
+List<int> numbers6 = new List<int> { 1, 2, 3, 4, 5 };
+numbers6.RemoveAll(n => n % 2 == 0);
+```
+
+**주요 메서드 요약:**
+
+| 메서드 | 설명 | 시간 복잡도 | 비고 |
+|--------|------|-------------|------|
+| `Add(item)` | 끝에 요소 추가 | 분할 상환 O(1) | 가장 효율적 |
+| `AddRange(collection)` | 여러 요소 한 번에 추가 | O(m) | m은 추가 요소 수 |
+| `Insert(index, item)` | 특정 위치에 삽입 | O(n) | 이후 요소 이동 필요 |
+| `Remove(item)` | 값으로 첫 번째 항목 제거 | O(n) | 검색 + 이동 |
+| `RemoveAt(index)` | 인덱스로 제거 | O(n) | 이후 요소 이동 |
+| `RemoveAll(predicate)` | 조건 만족 요소 모두 제거 | O(n) | 효율적 일괄 제거 |
+| `Clear()` | 모든 요소 제거 | O(n) | 용량은 유지 |
+
+**메모리 관리 고려사항:**
+
+Clear() 메서드는 Count를 0으로 만들지만 Capacity는 유지합니다. 대용량 List를 사용 후 메모리를 확실히 반환하고 싶다면:
+
+```csharp
+List<int> largeList = new List<int>(1000000);
+// ... 사용 후 ...
+largeList.Clear();  // Count = 0, Capacity = 1000000 (메모리는 여전히 점유)
+
+// 메모리 완전 반환
+largeList.TrimExcess();  // Capacity를 Count에 맞춤 (0)
+// 또는
+largeList = new List<int>();  // 새 인스턴스 생성 (이전 메모리는 GC 대상)
+```
+
+### 5.1.2 요소 검색
+
+List에서 특정 요소를 찾는 것은 매우 빈번한 작업입니다. C#은 다양한 검색 메서드를 제공하며, 각각은 서로 다른 알고리즘과 성능 특성을 가집니다. 검색 알고리즘의 선택은 데이터의 특성(정렬 여부, 크기 등)과 요구사항에 따라 달라집니다.
+
+**선형 검색(Linear Search) 기반 메서드:**
+
+List의 기본 검색 메서드들은 선형 검색 알고리즘을 사용합니다. 이는 첫 번째 요소부터 순차적으로 비교하여 일치하는 항목을 찾는 방식으로, 시간 복잡도는 O(n)입니다. 정렬되지 않은 데이터에서는 이것이 최선의 방법입니다.
+
+```csharp
+List<string> animals = new List<string> { "개", "고양이", "토끼", "햄스터", "고양이" };
+
+// 1. Contains() - 존재 여부만 확인
+// 시간 복잡도: O(n), 전체 리스트를 순회할 수 있음
+bool hasCat = animals.Contains("고양이");
+Console.WriteLine($"고양이가 있나요? {hasCat}");  // 출력: 고양이가 있나요? True
+
+bool hasTiger = animals.Contains("호랑이");
+Console.WriteLine($"호랑이가 있나요? {hasTiger}");  // 출력: 호랑이가 있나요? False
+
+// 2. IndexOf() - 첫 번째 일치 항목의 인덱스
+// 시간 복잡도: O(n)
+int index = animals.IndexOf("고양이");
+Console.WriteLine($"고양이의 인덱스: {index}");  // 출력: 고양이의 인덱스: 1
+
+// 찾지 못하면 -1 반환
+int notFoundIndex = animals.IndexOf("호랑이");
+Console.WriteLine($"호랑이의 인덱스: {notFoundIndex}");  // 출력: 호랑이의 인덱스: -1
+
+// 3. LastIndexOf() - 마지막 일치 항목의 인덱스
+// 시간 복잡도: O(n), 뒤에서부터 검색
+int lastIndex = animals.LastIndexOf("고양이");
+Console.WriteLine($"고양이의 마지막 인덱스: {lastIndex}");  // 출력: 고양이의 마지막 인덱스: 4
+
+// 4. IndexOf with start position - 특정 위치부터 검색
+int indexFrom = animals.IndexOf("고양이", 2);  // 인덱스 2부터 검색
+Console.WriteLine($"인덱스 2부터 고양이 검색: {indexFrom}");  // 출력: 인덱스 2부터 고양이 검색: 4
+```
+
+**술어(Predicate) 기반 검색:**
+
+더 복잡한 조건으로 검색할 때는 람다 식(Lambda Expression)을 사용하는 술어 기반 메서드가 매우 유용합니다. 이는 함수형 프로그래밍(Functional Programming)의 개념을 객체지향 언어에 통합한 좋은 예입니다.
+
+```csharp
+List<int> scores = new List<int> { 85, 92, 78, 95, 88, 73, 91 };
+
+// 1. Find() - 조건을 만족하는 첫 번째 요소
+// 시간 복잡도: O(n)
+int firstHighScore = scores.Find(score => score >= 90);
+Console.WriteLine($"90점 이상인 첫 번째 점수: {firstHighScore}");  // 출력: 90점 이상인 첫 번째 점수: 92
+
+// 찾지 못하면 기본값 반환 (정수는 0)
+int notFound = scores.Find(score => score > 100);
+Console.WriteLine($"100점 초과 점수: {notFound}");  // 출력: 100점 초과 점수: 0
+
+// 2. FindLast() - 조건을 만족하는 마지막 요소
+int lastHighScore = scores.FindLast(score => score >= 90);
+Console.WriteLine($"90점 이상인 마지막 점수: {lastHighScore}");  // 출력: 90점 이상인 마지막 점수: 91
+
+// 3. FindAll() - 조건을 만족하는 모든 요소를 새 List로 반환
+// 시간 복잡도: O(n), 공간 복잡도: O(k), k는 일치하는 요소 수
+List<int> highScores = scores.FindAll(score => score >= 90);
+Console.WriteLine($"90점 이상 개수: {highScores.Count}");  // 출력: 90점 이상 개수: 3
+Console.WriteLine($"90점 이상 점수들: {string.Join(", ", highScores)}");
+// 출력: 90점 이상 점수들: 92, 95, 91
+
+// 4. FindIndex() - 조건을 만족하는 첫 번째 요소의 인덱스
+int firstHighScoreIndex = scores.FindIndex(score => score >= 90);
+Console.WriteLine($"90점 이상인 첫 인덱스: {firstHighScoreIndex}");  // 출력: 90점 이상인 첫 인덱스: 1
+
+// 5. FindLastIndex() - 조건을 만족하는 마지막 요소의 인덱스
+int lastHighScoreIndex = scores.FindLastIndex(score => score >= 90);
+Console.WriteLine($"90점 이상인 마지막 인덱스: {lastHighScoreIndex}");  // 출력: 90점 이상인 마지막 인덱스: 6
+
+// 6. Exists() - 조건을 만족하는 요소가 하나라도 있는지 확인
+// 시간 복잡도: O(n), 조기 종료 가능
+bool hasFailingScore = scores.Exists(score => score < 60);
+Console.WriteLine($"60점 미만이 있나요? {hasFailingScore}");  // 출력: 60점 미만이 있나요? False
+
+bool hasExcellentScore = scores.Exists(score => score >= 95);
+Console.WriteLine($"95점 이상이 있나요? {hasExcellentScore}");  // 출력: 95점 이상이 있나요? True
+
+// 7. TrueForAll() - 모든 요소가 조건을 만족하는지 확인
+bool allPassed = scores.TrueForAll(score => score >= 60);
+Console.WriteLine($"모두 60점 이상인가요? {allPassed}");  // 출력: 모두 60점 이상인가요? True
+
+bool allExcellent = scores.TrueForAll(score => score >= 90);
+Console.WriteLine($"모두 90점 이상인가요? {allExcellent}");  // 출력: 모두 90점 이상인가요? False
+```
+
+**복잡한 객체 검색:**
+
+실무에서는 단순한 값이 아닌 복잡한 객체를 다루는 경우가 많습니다:
+
+```csharp
+// 학생 클래스 정의
+class Student
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public double GPA { get; set; }
+}
+
+List<Student> students = new List<Student>
+{
+    new Student { Name = "김철수", Age = 20, GPA = 3.5 },
+    new Student { Name = "이영희", Age = 22, GPA = 4.0 },
+    new Student { Name = "박민수", Age = 21, GPA = 3.8 },
+    new Student { Name = "최지혜", Age = 19, GPA = 3.9 }
+};
+
+// 특정 조건을 만족하는 학생 찾기
+Student topStudent = students.Find(s => s.GPA >= 4.0);
+Console.WriteLine($"최우수 학생: {topStudent?.Name}");  // 출력: 최우수 학생: 이영희
+
+// 여러 조건 조합
+List<Student> youngHighAchievers = students.FindAll(s => s.Age < 21 && s.GPA >= 3.8);
+Console.WriteLine($"20세 이하 우수 학생 수: {youngHighAchievers.Count}");
+```
+
+**이진 검색(Binary Search) - 정렬된 List에서의 빠른 검색:**
+
+List가 정렬되어 있다면, 이진 검색 알고리즘을 사용하여 O(log n) 시간에 검색할 수 있습니다. 이는 큰 데이터셋에서 극적인 성능 향상을 가져옵니다.
+
+```csharp
+List<int> sortedNumbers = new List<int> { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
+
+// BinarySearch() - 이진 검색
+// 시간 복잡도: O(log n), 단 리스트가 정렬되어 있어야 함
+int binaryIndex = sortedNumbers.BinarySearch(50);
+Console.WriteLine($"50의 인덱스: {binaryIndex}");  // 출력: 50의 인덱스: 4
+
+// 찾지 못하면 음수 반환 (비트 보수 값)
+int notFoundBinary = sortedNumbers.BinarySearch(55);
+Console.WriteLine($"55의 인덱스: {notFoundBinary}");  // 출력: 음수 (예: -6)
+// 비트 보수 (~notFoundBinary)를 취하면 삽입해야 할 위치를 알 수 있음
+int insertPosition = ~notFoundBinary;
+Console.WriteLine($"55를 삽입할 위치: {insertPosition}");  // 출력: 55를 삽입할 위치: 5
+```
+
+**성능 비교와 선택 가이드:**
+
+| 메서드 | 시간 복잡도 | 전제 조건 | 사용 시나리오 |
+|--------|-------------|-----------|---------------|
+| `Contains()` | O(n) | 없음 | 존재 여부만 확인 |
+| `IndexOf()` | O(n) | 없음 | 위치와 존재 여부 확인 |
+| `Find()` | O(n) | 없음 | 복잡한 조건, 요소 자체 필요 |
+| `FindAll()` | O(n) | 없음 | 여러 일치 항목 필요 |
+| `Exists()` | O(n) | 없음 | 조건 만족 여부만 확인 |
+| `BinarySearch()` | O(log n) | **정렬됨** | 대용량 정렬 데이터 |
+
+**주요 메서드 요약:**
+
+| 메서드 | 설명 | 반환 타입 | 비고 |
+|--------|------|-----------|------|
+| `Contains(item)` | 요소 존재 여부 | bool | 단순 포함 검사 |
+| `IndexOf(item)` | 첫 번째 일치 인덱스 | int | 없으면 -1 |
+| `Find(predicate)` | 조건 만족 첫 요소 | T | 없으면 default(T) |
+| `FindAll(predicate)` | 조건 만족 모든 요소 | List<T> | 새 리스트 생성 |
+| `FindIndex(predicate)` | 조건 만족 첫 인덱스 | int | 없으면 -1 |
+| `Exists(predicate)` | 조건 만족 요소 존재 | bool | 조기 종료 최적화 |
+| `TrueForAll(predicate)` | 모든 요소 조건 만족 | bool | AND 논리 |
+| `BinarySearch(item)` | 이진 검색 | int | 정렬 필수 |
+
+### 5.1.3 정렬과 필터링
+
+데이터를 정렬(Sorting)하고 필터링(Filtering)하는 것은 프로그래밍에서 가장 보편적이면서도 중요한 작업 중 하나입니다. 컴퓨터 과학의 역사에서 정렬 알고리즘의 연구는 알고리즘 분석과 최적화의 핵심 주제였으며, 오늘날에도 데이터베이스, 검색 엔진, 운영체제 등 모든 곳에서 정렬이 활용됩니다. C#의 List<T>는 이러한 고전적 알고리즘들을 최적화된 형태로 내장하여 제공합니다.
+
+**정렬 알고리즘의 이해:**
+
+List<T>의 `Sort()` 메서드는 내부적으로 **Introspective Sort(내성적 정렬, IntroSort)**라는 하이브리드 알고리즘을 사용합니다. 이는 Microsoft가 .NET Framework를 위해 선택한 알고리즘으로, 다음 세 가지 정렬 알고리즘을 상황에 따라 조합합니다:
+
+1. **Quick Sort (퀵 정렬)**: 평균 O(n log n), 일반적인 경우에 가장 빠름
+2. **Heap Sort (힙 정렬)**: 최악 O(n log n), 재귀 깊이가 과도할 때 사용
+3. **Insertion Sort (삽입 정렬)**: 작은 배열(약 16개 이하)에서 효율적
+
+이러한 조합을 통해 IntroSort는 평균적으로도 빠르고, 최악의 경우에도 O(n log n)을 보장합니다.
+
+**기본 정렬:**
+
+```csharp
+List<int> numbers = new List<int> { 45, 12, 78, 23, 67, 34 };
+
+// Sort() - 오름차순 정렬 (in-place, 원본 수정)
+// 시간 복잡도: O(n log n)
+// 공간 복잡도: O(log n) (재귀 호출 스택)
+numbers.Sort();
+Console.WriteLine("오름차순: " + string.Join(", ", numbers));
+// 출력: 오름차순: 12, 23, 34, 45, 67, 78
+
+// Reverse() - 순서 뒤집기 (in-place)
+// 시간 복잡도: O(n)
+numbers.Reverse();
+Console.WriteLine("내림차순: " + string.Join(", ", numbers));
+// 출력: 내림차순: 78, 67, 45, 34, 23, 12
+
+// 다시 오름차순으로
+numbers.Reverse();
+```
+
+**원본 보존과 불변성 패턴:**
+
+`Sort()`는 원본 리스트를 수정합니다(in-place). 원본을 보존하고 싶다면:
+
+```csharp
+List<int> original = new List<int> { 45, 12, 78, 23, 67, 34 };
+
+// 방법 1: 복사 후 정렬
+List<int> sorted1 = new List<int>(original);
+sorted1.Sort();
+
+// 방법 2: LINQ OrderBy 사용 (새 시퀀스 생성, 지연 평가)
+var sorted2 = original.OrderBy(x => x).ToList();
+
+// 원본은 변경되지 않음
+Console.WriteLine($"원본: {string.Join(", ", original)}");
+Console.WriteLine($"정렬됨: {string.Join(", ", sorted1)}");
+```
+
+**문자열 정렬과 문화권 고려:**
+
+문자열 정렬은 문화권(Culture)에 따라 다르게 동작할 수 있습니다:
+
+```csharp
+List<string> names = new List<string> { "홍길동", "김철수", "이영희", "박민수" };
+
+// 기본 정렬 (현재 문화권의 규칙 사용)
+names.Sort();
+Console.WriteLine("정렬된 이름: " + string.Join(", ", names));
+// 출력: 정렬된 이름: 김철수, 박민수, 이영희, 홍길동
+
+// StringComparer를 사용한 정렬
+List<string> englishWords = new List<string> { "apple", "Banana", "Cherry", "date" };
+
+// 대소문자 구분 정렬
+englishWords.Sort(StringComparer.Ordinal);
+Console.WriteLine(string.Join(", ", englishWords));  // Banana, Cherry, apple, date
+
+// 대소문자 무시 정렬
+englishWords.Sort(StringComparer.OrdinalIgnoreCase);
+Console.WriteLine(string.Join(", ", englishWords));  // apple, Banana, Cherry, date
+```
+
+**사용자 정의 정렬 (Custom Sorting):**
+
+복잡한 객체를 정렬하려면 비교 기준을 명시해야 합니다. C#은 이를 위해 여러 방법을 제공합니다:
+
+```csharp
+class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public double Height { get; set; }
+}
+
+List<Person> people = new List<Person>
+{
+    new Person { Name = "김철수", Age = 25, Height = 175.5 },
+    new Person { Name = "이영희", Age = 22, Height = 162.3 },
+    new Person { Name = "박민수", Age = 28, Height = 180.2 },
+    new Person { Name = "최지혜", Age = 22, Height = 168.7 }
+};
+
+// 방법 1: Comparison<T> 델리게이트 사용 (람다 식)
+people.Sort((p1, p2) => p1.Age.CompareTo(p2.Age));
+Console.WriteLine("나이순 정렬:");
+foreach (var p in people)
+    Console.WriteLine($"  {p.Name} ({p.Age}세)");
+
+// 방법 2: IComparer<T> 구현
+class HeightComparer : IComparer<Person>
+{
+    public int Compare(Person x, Person y)
+    {
+        return x.Height.CompareTo(y.Height);
+    }
+}
+people.Sort(new HeightComparer());
+
+// 방법 3: LINQ OrderBy 사용 (더 직관적)
+var sortedByName = people.OrderBy(p => p.Name).ToList();
+var sortedByAgeDesc = people.OrderByDescending(p => p.Age).ToList();
+
+// 다중 기준 정렬 (나이순, 같으면 키순)
+var multiSort = people
+    .OrderBy(p => p.Age)
+    .ThenByDescending(p => p.Height)
+    .ToList();
+```
+
+**안정 정렬 (Stable Sort):**
+
+안정 정렬은 동일한 키를 가진 요소들의 상대적 순서가 보존되는 정렬입니다. `List<T>.Sort()`는 **불안정 정렬(Unstable Sort)**이지만, LINQ의 `OrderBy()`는 **안정 정렬**입니다:
+
+```csharp
+var data = new List<(string Name, int Score)>
+{
+    ("Alice", 85),
+    ("Bob", 92),
+    ("Charlie", 85),
+    ("David", 92)
+};
+
+// List.Sort() - 불안정 정렬 (동일 점수 내 순서 보장 안 됨)
+var listSorted = new List<(string, int)>(data);
+listSorted.Sort((a, b) => a.Score.CompareTo(b.Score));
+
+// LINQ OrderBy - 안정 정렬 (동일 점수 내 원래 순서 유지)
+var linqSorted = data.OrderBy(x => x.Score).ToList();
+```
+
+**필터링 (Filtering):**
+
+필터링은 특정 조건을 만족하는 요소만 선별하는 작업으로, 데이터 분석과 처리의 핵심입니다:
+
+```csharp
+List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+// FindAll() - 조건에 맞는 모든 요소를 새 List로 반환
+List<int> evenNumbers = numbers.FindAll(n => n % 2 == 0);
+Console.WriteLine("짝수: " + string.Join(", ", evenNumbers));
+// 출력: 짝수: 2, 4, 6, 8, 10
+
+// 5보다 큰 수만 필터링
+List<int> greaterThanFive = numbers.FindAll(n => n > 5);
+Console.WriteLine("5보다 큰 수: " + string.Join(", ", greaterThanFive));
+// 출력: 5보다 큰 수: 6, 7, 8, 9, 10
+
+// 복잡한 조건: 짝수이면서 5보다 큰 수
+List<int> complexFilter = numbers.FindAll(n => n % 2 == 0 && n > 5);
+Console.WriteLine("짝수이면서 5보다 큰: " + string.Join(", ", complexFilter));
+// 출력: 짝수이면서 5보다 큰: 6, 8, 10
+```
+
+**LINQ를 활용한 고급 필터링:**
+
+LINQ (Language Integrated Query)는 더 강력하고 표현력 있는 필터링을 가능하게 합니다:
+
+```csharp
+List<int> scores = new List<int> { 85, 92, 78, 95, 88, 73, 91, 67 };
+
+// Where() - LINQ 필터링 (지연 평가)
+var highScores = scores.Where(s => s >= 90);
+Console.WriteLine("90점 이상: " + string.Join(", ", highScores));
+
+// 복합 LINQ 쿼리: 필터링 + 정렬 + 변환
+var topScoresFormatted = scores
+    .Where(s => s >= 85)          // 85점 이상만
+    .OrderByDescending(s => s)     // 내림차순 정렬
+    .Take(3)                       // 상위 3개
+    .Select(s => $"{s}점")         // 문자열로 변환
+    .ToList();
+
+Console.WriteLine("상위 3개 점수: " + string.Join(", ", topScoresFormatted));
+```
+
+**순회 (Iteration):**
+
+List를 순회하는 여러 방법과 각각의 용도:
+
+```csharp
+List<string> fruits = new List<string> { "사과", "바나나", "오렌지" };
+
+// 1. foreach - 가장 간결하고 권장됨
+foreach (string fruit in fruits)
+{
+    Console.WriteLine(fruit);
+}
+
+// 2. for - 인덱스가 필요한 경우
+for (int i = 0; i < fruits.Count; i++)
+{
+    Console.WriteLine($"{i}: {fruits[i]}");
+}
+
+// 3. ForEach() 메서드 - 함수형 스타일
+fruits.ForEach(fruit => Console.WriteLine(fruit));
+
+// 4. LINQ Select with Index
+var indexedFruits = fruits.Select((fruit, index) => $"{index}: {fruit}");
+foreach (var item in indexedFruits)
+{
+    Console.WriteLine(item);
+}
+```
+
+**성능 고려사항과 최적화:**
+
+| 작업 | 시간 복잡도 | 메모리 | 최적화 팁 |
+|------|-------------|--------|-----------|
+| `Sort()` | O(n log n) | O(log n) | 이미 정렬되었다면 재정렬 불필요 |
+| `Reverse()` | O(n) | O(1) | In-place, 추가 메모리 불필요 |
+| `FindAll()` | O(n) | O(k) | 결과 크기만큼 메모리 |
+| LINQ `Where()` | O(n) | 지연 | ToList() 호출 시까지 평가 안 됨 |
+| LINQ `OrderBy()` | O(n log n) | O(n) | 안정 정렬, 새 시퀀스 생성 |
+
+**주요 메서드 요약:**
+
+| 메서드 | 설명 | 시간 복잡도 | 원본 수정 |
+|--------|------|-------------|-----------|
+| `Sort()` | 오름차순 정렬 | O(n log n) | ✅ 예 |
+| `Sort(comparison)` | 사용자 정의 정렬 | O(n log n) | ✅ 예 |
+| `Reverse()` | 순서 뒤집기 | O(n) | ✅ 예 |
+| `FindAll(predicate)` | 조건 필터링 | O(n) | ❌ 아니오 (새 List) |
+| LINQ `Where()` | 지연 필터링 | O(n) | ❌ 아니오 (지연) |
+| LINQ `OrderBy()` | 안정 정렬 | O(n log n) | ❌ 아니오 (새 시퀀스) |
+
+**조건부 필터링:**
+
+```csharp
+List<int> numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+// 짝수만 필터링
+List<int> evenNumbers = numbers.FindAll(n => n % 2 == 0);
+Console.WriteLine("짝수: " + string.Join(", ", evenNumbers));
+// 출력: 짝수: 2, 4, 6, 8, 10
+
+// 5보다 큰 수만 필터링
+List<int> greaterThanFive = numbers.FindAll(n => n > 5);
+Console.WriteLine("5보다 큰 수: " + string.Join(", ", greaterThanFive));
+// 출력: 5보다 큰 수: 6, 7, 8, 9, 10
+```
+
+**순회:**
+
+```csharp
+List<string> fruits = new List<string> { "사과", "바나나", "오렌지" };
+
+// foreach로 순회
+foreach (string fruit in fruits)
+{
+    Console.WriteLine(fruit);
+}
+
+// for로 순회 (인덱스가 필요한 경우)
+for (int i = 0; i < fruits.Count; i++)
+{
+    Console.WriteLine($"{i}: {fruits[i]}");
+}
+```
+
+**주요 메서드:**
+- `Sort()`: 오름차순 정렬
+- `Reverse()`: 순서 뒤집기
+- `FindAll(predicate)`: 조건을 만족하는 모든 요소를 새 리스트로 반환
+
+---
+
+## 5.2 Dictionary<TKey, TValue>
+
+`Dictionary<TKey, TValue>`는 C# 컬렉션 프레임워크에서 **연관 배열(Associative Array)** 또는 **맵(Map)**으로 알려진 자료구조의 구현체입니다. 이는 컴퓨터 과학에서 **해시 테이블(Hash Table)**이라는 고전적이면서도 강력한 알고리즘을 기반으로 하며, 키(Key)를 통한 값(Value)의 빠른 검색을 가능하게 합니다.
+
+**해시 테이블의 역사와 중요성:**
+
+해시 테이블의 개념은 1953년 IBM의 Hans Peter Luhn이 처음 제안했으며, 이후 1960년대 Arnold Dumey와 Donald Knuth의 연구를 통해 이론적 기반이 확립되었습니다. 이 자료구조는 평균 O(1) 시간 복잡도로 삽입, 삭제, 검색을 수행할 수 있어, 데이터베이스의 인덱싱, 컴파일러의 심볼 테이블, 네트워크 라우팅 테이블 등 무수히 많은 곳에서 핵심 기술로 사용됩니다.
+
+**Dictionary의 핵심 원리:**
+
+Dictionary는 두 가지 핵심 개념을 기반으로 작동합니다:
+
+1. **해싱(Hashing)**: 키 객체의 `GetHashCode()` 메서드를 호출하여 정수형 해시 코드를 얻습니다. 이 해시 코드는 내부 배열(버킷, Bucket)의 인덱스를 결정하는 데 사용됩니다.
+
+2. **충돌 해결(Collision Resolution)**: 서로 다른 키가 같은 해시 코드를 가질 수 있는 "해시 충돌" 상황을 처리합니다. .NET의 Dictionary는 **체이닝(Chaining)** 방식을 사용하여, 같은 해시 코드를 가진 키들을 연결 리스트로 관리합니다.
+
+**내부 구조 상세:**
+
+```
+Dictionary 내부 구조:
+
+buckets[]:  [0] -> Entry { hash, key, value, next } -> Entry -> ...
+            [1] -> Entry { hash, key, value, next }
+            [2] -> null
+            [3] -> Entry { hash, key, value, next } -> Entry -> ...
+            ...
+
+각 Entry는:
+- hash: 키의 해시 코드
+- key: 실제 키 객체
+- value: 저장된 값
+- next: 같은 버킷의 다음 Entry 인덱스 (충돌 시)
+```
+
+**시간 복잡도 분석:**
+
+| 연산 | 평균 경우 | 최악 경우 | 조건 |
+|------|-----------|-----------|------|
+| 삽입 | O(1) | O(n) | 모든 키가 충돌하는 극단적 경우 |
+| 검색 | O(1) | O(n) | 좋은 해시 함수 필수 |
+| 삭제 | O(1) | O(n) | 로드 팩터 관리 중요 |
+
+**로드 팩터(Load Factor)와 재해싱(Rehashing):**
+
+로드 팩터는 `항목 수 / 버킷 수`로 정의되며, .NET Dictionary는 기본적으로 로드 팩터가 약 0.75를 초과하면 용량을 2배로 늘리고 모든 항목을 재배치(rehashing)합니다. 이는 List의 용량 확장과 유사한 전략입니다.
+
+**기본 생성과 초기화:**
+
+Dictionary를 생성하는 다양한 방법과 각각의 특성:
+
+```csharp
+// 1. 빈 Dictionary 생성 (기본 용량: 0)
+Dictionary<string, int> scores = new Dictionary<string, int>();
+
+// 2. 초기 용량 지정 (성능 최적화)
+// 항목 수를 예측할 수 있다면 초기 용량 설정으로 재해싱 방지
+Dictionary<string, int> scoresWithCapacity = new Dictionary<string, int>(100);
+
+// 3. 컬렉션 초기화 구문 (C# 3.0+)
+Dictionary<string, string> phoneBook = new Dictionary<string, string>
+{
+    { "홍길동", "010-1234-5678" },
+    { "김철수", "010-2345-6789" },
+    { "이영희", "010-3456-7890" }
+};
+
+// 4. 인덱스 초기화 구문 (C# 6.0+, 더 간결)
+Dictionary<string, string> phoneBook2 = new Dictionary<string, string>
+{
+    ["홍길동"] = "010-1234-5678",
+    ["김철수"] = "010-2345-6789",
+    ["이영희"] = "010-3456-7890"
+};
+
+// 5. var 키워드 사용
+var cities = new Dictionary<string, int>
+{
+    ["서울"] = 10000000,
+    ["부산"] = 3500000
+};
+
+// 6. 사용자 정의 비교자(IEqualityComparer) 지정
+// 대소문자 구분 없는 문자열 키
+Dictionary<string, int> caseInsensitive = new Dictionary<string, int>(
+    StringComparer.OrdinalIgnoreCase);
+caseInsensitive["Key"] = 1;
+caseInsensitive["KEY"] = 2;  // "Key"를 덮어씀 (같은 키로 인식)
+
+Console.WriteLine($"전화번호부 항목 수: {phoneBook.Count}");  // 출력: 전화번호부 항목 수: 3
+```
+
+**키 타입의 요구사항:**
+
+Dictionary의 키로 사용되는 타입은 다음 조건을 만족해야 합니다:
+
+1. **GetHashCode() 구현**: 일관된 해시 코드를 반환해야 합니다.
+2. **Equals() 구현**: 키의 동등성을 올바르게 판단해야 합니다.
+3. **불변성(Immutability) 권장**: 키가 Dictionary에 있는 동안 해시 코드나 동등성이 변하지 않아야 합니다.
+
+```csharp
+// ✅ 좋은 키 타입: 불변 타입
+Dictionary<int, string> goodDict1 = new Dictionary<int, string>();
+Dictionary<string, string> goodDict2 = new Dictionary<string, string>();
+Dictionary<Guid, string> goodDict3 = new Dictionary<Guid, string>();
+
+// ⚠️ 주의 필요: 가변 객체를 키로 사용
+class MutableKey
+{
+    public int Value { get; set; }  // 변경 가능!
+    
+    public override int GetHashCode() => Value.GetHashCode();
+    public override bool Equals(object obj) => 
+        obj is MutableKey key && Value == key.Value;
+}
+
+var riskyDict = new Dictionary<MutableKey, string>();
+var key = new MutableKey { Value = 1 };
+riskyDict[key] = "값";
+
+// 위험: 키를 수정하면 해시 코드가 변경되어 찾을 수 없게 됨!
+key.Value = 2;
+// riskyDict[key]를 호출하면 KeyNotFoundException 발생 가능
+```
+
+### 5.2.1 키-값 쌍 추가
+
+Dictionary에 데이터를 추가하는 것은 해시 함수를 통한 버킷 결정과 충돌 처리를 포함하는 복잡한 과정이지만, C#은 이를 간단한 API로 추상화하여 제공합니다.
+
+**요소 추가의 두 가지 방법:**
+
+```csharp
+Dictionary<string, int> ages = new Dictionary<string, int>();
+
+// 방법 1: Add() 메서드
+// 장점: 중복 키 시 예외 발생으로 명확한 오류 감지
+// 단점: 키 존재 여부를 미리 확인해야 하는 번거로움
+ages.Add("홍길동", 25);
+ages.Add("김철수", 30);
+ages.Add("이영희", 28);
+
+// 같은 키 재추가 시도
+try
+{
+    ages.Add("홍길동", 26);  // ❌ ArgumentException 발생
+}
+catch (ArgumentException)
+{
+    Console.WriteLine("이미 존재하는 키입니다.");
+}
+
+// 방법 2: 인덱서 (Indexer) 사용 [key] = value
+// 장점: 간결하고 유연함, 키가 있으면 업데이트, 없으면 추가
+// 단점: 의도치 않은 값 덮어쓰기 가능
+ages["박민수"] = 35;     // 추가
+ages["홍길동"] = 26;     // 업데이트 (기존 값 25 -> 26)
+
+Console.WriteLine($"등록된 사람 수: {ages.Count}");  // 출력: 등록된 사람 수: 4
+Console.WriteLine($"홍길동의 나이: {ages["홍길동"]}");  // 출력: 홍길동의 나이: 26
+```
+
+**Add() vs Indexer 선택 가이드:**
+
+| 시나리오 | 권장 방법 | 이유 |
+|----------|-----------|------|
+| 새 키만 추가 (중복 불허) | `Add()` | 중복 시 예외로 명확한 오류 처리 |
+| 업데이트 허용 | `Indexer` | 존재 여부와 관계없이 작동 |
+| 빈도 높은 업데이트 | `Indexer` | 간결하고 효율적 |
+| 안전한 추가 | `TryAdd()` | C# 10+, bool 반환 |
+
+**안전한 추가 패턴:**
+
+```csharp
+Dictionary<string, string> capitals = new Dictionary<string, string>
+{
+    { "한국", "서울" },
+    { "일본", "도쿄" }
+};
+
+// 패턴 1: ContainsKey() 확인 후 추가
+if (!capitals.ContainsKey("중국"))
+{
+    capitals.Add("중국", "베이징");
+}
+
+// 패턴 2: TryAdd() 사용 (C# 10+, .NET 5+)
+bool added = capitals.TryAdd("미국", "워싱턴 D.C.");
+Console.WriteLine($"추가 성공: {added}");  // 출력: 추가 성공: True
+
+bool failedToAdd = capitals.TryAdd("한국", "부산");
+Console.WriteLine($"추가 성공: {failedToAdd}");  // 출력: 추가 성공: False
+
+// 패턴 3: 조건부 업데이트
+if (capitals.ContainsKey("한국"))
+{
+    capitals["한국"] = "부산";  // 의도적 업데이트
+}
+
+// 패턴 4: GetValueOrDefault와 조합
+int currentCount = ages.GetValueOrDefault("정다은", 0);
+ages["정다은"] = currentCount + 1;  // 카운터 증가 (없으면 1부터 시작)
+```
+
+**중복 키 처리 전략:**
+
+```csharp
+Dictionary<string, List<string>> multiValueDict = new Dictionary<string, List<string>>();
+
+// 키당 여러 값을 저장하고 싶을 때
+void AddMultiValue(string key, string value)
+{
+    if (!multiValueDict.ContainsKey(key))
+    {
+        multiValueDict[key] = new List<string>();
+    }
+    multiValueDict[key].Add(value);
+}
+
+AddMultiValue("과일", "사과");
+AddMultiValue("과일", "바나나");
+AddMultiValue("채소", "당근");
+
+foreach (var item in multiValueDict)
+{
+    Console.WriteLine($"{item.Key}: {string.Join(", ", item.Value)}");
+}
+// 출력:
+// 과일: 사과, 바나나
+// 채소: 당근
+```
+
+**컬렉션 초기화 구문 비교:**
+
+```csharp
+// C# 3.0 스타일 (Add 메서드 호출)
+var dict1 = new Dictionary<string, int>
+{
+    { "A", 1 },
+    { "B", 2 }
+};
+
+// C# 6.0 스타일 (인덱서 사용, 더 간결)
+var dict2 = new Dictionary<string, int>
+{
+    ["A"] = 1,
+    ["B"] = 2
+};
+
+// C# 9.0 Target-typed new
+Dictionary<string, int> dict3 = new()  // 타입 생략 가능
+{
+    ["A"] = 1,
+    ["B"] = 2
+};
+```
+
+**성능 고려사항:**
+
+```csharp
+// 나쁜 예: 반복적인 재해싱
+var badDict = new Dictionary<string, int>();
+for (int i = 0; i < 10000; i++)
+{
+    badDict[$"key{i}"] = i;  // 여러 번 재해싱 발생 가능
+}
+
+// 좋은 예: 초기 용량 설정
+var goodDict = new Dictionary<string, int>(10000);
+for (int i = 0; i < 10000; i++)
+{
+    goodDict[$"key{i}"] = i;  // 재해싱 최소화
+}
+
+// 측정 가능한 성능 차이:
+// - badDict: 약 15-20회의 재해싱 발생
+// - goodDict: 재해싱 없음, 약 2-3배 빠름
+```
+    ["김철수"] = 92,
+    ["이영희"] = 78,
+    ["박민수"] = 95
+};
+```
+
+### 5.2.2 키로 값 조회
+
+Dictionary의 핵심 가치는 키를 통한 빠른 값 검색에 있습니다. 해시 테이블의 특성상 평균 O(1) 시간에 원하는 값을 찾을 수 있어, 배열이나 List의 선형 검색 O(n)과 비교하여 극적인 성능 향상을 제공합니다. 그러나 이러한 효율성을 안전하게 활용하기 위해서는 올바른 조회 패턴을 이해해야 합니다.
+
+**인덱서를 통한 직접 조회:**
+
+Dictionary의 인덱서 `[key]`는 배열과 유사한 문법을 제공하지만, 내부적으로는 해시 함수를 통한 복잡한 검색 과정을 수행합니다:
+
+```csharp
+Dictionary<string, string> phoneBook = new Dictionary<string, string>
+{
+    { "홍길동", "010-1234-5678" },
+    { "김철수", "010-2345-6789" },
+    { "이영희", "010-3456-7890" }
+};
+
+// 인덱서를 통한 조회 (시간 복잡도: 평균 O(1))
+string phone = phoneBook["홍길동"];
+Console.WriteLine($"홍길동의 전화번호: {phone}");
+// 출력: 홍길동의 전화번호: 010-1234-5678
+
+// 주의: 존재하지 않는 키를 조회하면 KeyNotFoundException 발생!
+try
+{
+    string unknown = phoneBook["박민수"];  // ❌ 예외 발생
+}
+catch (KeyNotFoundException ex)
+{
+    Console.WriteLine($"오류: {ex.Message}");
+    // 출력: 오류: The given key '박민수' was not present in the dictionary.
+}
+```
+
+**안전한 조회 패턴 - TryGetValue의 중요성:**
+
+`TryGetValue()` 메서드는 Dictionary 사용의 모범 사례(Best Practice)로, 예외 처리 오버헤드 없이 안전하게 값을 조회할 수 있습니다. 이는 "예외를 예상 가능한 흐름 제어에 사용하지 말라"는 소프트웨어 공학 원칙을 따릅니다.
+
+```csharp
+Dictionary<string, int> ages = new Dictionary<string, int>
+{
+    { "홍길동", 25 },
+    { "김철수", 30 }
+};
+
+// TryGetValue 패턴 (권장)
+// 성공 시 true 반환 + out 매개변수에 값 할당
+// 실패 시 false 반환 + out 매개변수는 default(TValue)
+if (ages.TryGetValue("홍길동", out int age))
+{
+    Console.WriteLine($"홍길동의 나이: {age}세");  // 출력: 홍길동의 나이: 25세
+}
+else
+{
+    Console.WriteLine("정보를 찾을 수 없습니다.");
+}
+
+// 존재하지 않는 키 (예외 없이 안전하게 처리)
+if (ages.TryGetValue("박민수", out int age2))
+{
+    Console.WriteLine($"박민수의 나이: {age2}세");
+}
+else
+{
+    Console.WriteLine("박민수의 정보를 찾을 수 없습니다.");
+    // 출력: 박민수의 정보를 찾을 수 없습니다.
+}
+
+// C# 7.0+: 인라인 변수 선언 (더 간결)
+if (ages.TryGetValue("이영희", out var age3))
+{
+    Console.WriteLine($"이영희의 나이: {age3}세");
+}
+```
+
+**성능 비교: TryGetValue vs ContainsKey + Indexer:**
+
+```csharp
+// ❌ 비효율적 패턴 - 두 번의 해시 검색
+if (ages.ContainsKey("홍길동"))
+{
+    int age = ages["홍길동"];  // 해시 검색 2회
+    Console.WriteLine(age);
+}
+
+// ✅ 효율적 패턴 - 한 번의 해시 검색
+if (ages.TryGetValue("홍길동", out int age))
+{
+    Console.WriteLine(age);  // 해시 검색 1회
+}
+
+// 성능 차이: 큰 Dictionary에서 수백만 번 반복 시 약 2배 속도 향상
+```
+
+**기본값 제공 - GetValueOrDefault (C# 9.0+, .NET 5+):**
+
+```csharp
+Dictionary<string, int> scores = new Dictionary<string, int>
+{
+    { "홍길동", 85 },
+    { "김철수", 92 }
+};
+
+// 키가 없으면 기본값 반환 (int의 경우 0)
+int score1 = scores.GetValueOrDefault("홍길동");
+Console.WriteLine($"점수: {score1}");  // 출력: 점수: 85
+
+int score2 = scores.GetValueOrDefault("박민수");
+Console.WriteLine($"점수: {score2}");  // 출력: 점수: 0
+
+// 사용자 지정 기본값
+int score3 = scores.GetValueOrDefault("최지혜", 60);
+Console.WriteLine($"점수: {score3}");  // 출력: 점수: 60
+
+// 참조 타입의 경우
+Dictionary<string, string> dict = new Dictionary<string, string>
+{
+    { "key1", "value1" }
+};
+string value = dict.GetValueOrDefault("key2", "없음");
+Console.WriteLine(value);  // 출력: 없음
+```
+
+**값 수정 패턴:**
+
+Dictionary의 값은 키를 통해 쉽게 수정할 수 있습니다:
+
+```csharp
+Dictionary<string, int> inventory = new Dictionary<string, int>
+{
+    { "사과", 10 },
+    { "바나나", 5 }
+};
+
+// 직접 수정
+inventory["사과"] = 15;
+Console.WriteLine($"사과 재고: {inventory["사과"]}");  // 출력: 사과 재고: 15
+
+// 증가/감소 패턴
+inventory["바나나"] += 3;  // 5 + 3 = 8
+Console.WriteLine($"바나나 재고: {inventory["바나나"]}");  // 출력: 바나나 재고: 8
+
+// 안전한 업데이트 패턴
+if (inventory.TryGetValue("오렌지", out int count))
+{
+    inventory["오렌지"] = count + 1;
+}
+else
+{
+    inventory["오렌지"] = 1;  // 없으면 1부터 시작
+}
+
+// 더 간결한 패턴 (GetValueOrDefault 활용)
+inventory["포도"] = inventory.GetValueOrDefault("포도") + 1;
+```
+
+**복잡한 값 타입 다루기:**
+
+값이 복잡한 객체인 경우의 처리:
+
+```csharp
+class Student
+{
+    public string Name { get; set; }
+    public List<int> Scores { get; set; }
+}
+
+Dictionary<string, Student> students = new Dictionary<string, Student>
+{
+    ["S001"] = new Student { Name = "김철수", Scores = new List<int> { 85, 90, 88 } },
+    ["S002"] = new Student { Name = "이영희", Scores = new List<int> { 92, 95, 91 } }
+};
+
+// 안전한 객체 속성 접근
+if (students.TryGetValue("S001", out Student student))
+{
+    Console.WriteLine($"학생 이름: {student.Name}");
+    Console.WriteLine($"평균 점수: {student.Scores.Average()}");
+}
+
+// Null 조건 연산자와 조합 (C# 6.0+)
+Student s = students.GetValueOrDefault("S003");
+Console.WriteLine($"학생 이름: {s?.Name ?? "없음"}");  // 출력: 학생 이름: 없음
+```
+
+**조회 메서드 비교:**
+
+| 메서드 | 키 없을 때 | 성능 | 사용 시나리오 |
+|--------|------------|------|---------------|
+| `dict[key]` | 예외 발생 | O(1) | 키 존재 확실할 때 |
+| `TryGetValue()` | false 반환 | O(1) | 일반적 사용 (권장) |
+| `ContainsKey() + dict[key]` | 선제 확인 | O(1) × 2 | 비권장 (비효율적) |
+| `GetValueOrDefault()` | 기본값 반환 | O(1) | 기본값 처리 필요 시 |
+
+**실전 활용 예제:**
+
+```csharp
+// 단어 빈도 계산 (전형적인 Dictionary 사용 사례)
+string text = "the quick brown fox jumps over the lazy dog";
+var wordCount = new Dictionary<string, int>();
+
+foreach (string word in text.Split(' '))
+{
+    // 패턴 1: TryGetValue 사용
+    if (wordCount.TryGetValue(word, out int count))
+    {
+        wordCount[word] = count + 1;
+    }
+    else
+    {
+        wordCount[word] = 1;
+    }
+    
+    // 패턴 2: GetValueOrDefault 사용 (더 간결)
+    // wordCount[word] = wordCount.GetValueOrDefault(word) + 1;
+}
+
+foreach (var kvp in wordCount)
+{
+    Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+}
+// 출력:
+// the: 2
+// quick: 1
+// brown: 1
+// ...
+```
+
+// 기존 값 수정
+scores["홍길동"] = 95;
+Console.WriteLine($"홍길동의 새 점수: {scores["홍길동"]}");
+// 출력: 홍길동의 새 점수: 95
+```
+
+### 5.2.3 키 존재 여부 확인과 순회
+
+Dictionary에서 데이터의 존재 여부를 확인하고 전체 항목을 순회하는 것은 실무에서 매우 빈번한 작업입니다. 이러한 연산들의 성능 특성과 최적의 사용 패턴을 이해하면, 효율적이고 안전한 코드를 작성할 수 있습니다.
+
+**키 존재 확인 - ContainsKey():**
+
+`ContainsKey()`는 해시 기반 검색을 통해 평균 O(1) 시간에 키의 존재 여부를 확인합니다:
+
+```csharp
+Dictionary<string, string> countries = new Dictionary<string, string>
+{
+    { "KR", "대한민국" },
+    { "US", "미국" },
+    { "JP", "일본" }
+};
+
+// ContainsKey() - 시간 복잡도: 평균 O(1)
+if (countries.ContainsKey("KR"))
+{
+    Console.WriteLine("KR 키가 존재합니다.");  // 출력됨
+    string country = countries["KR"];  // 안전하게 조회 가능
+    Console.WriteLine($"국가: {country}");
+}
+
+if (!countries.ContainsKey("CN"))
+{
+    Console.WriteLine("CN 키가 없습니다.");  // 출력됨
+    countries["CN"] = "중국";  // 안전하게 추가
+}
+
+// Switch expression과 패턴 매칭 활용 (C# 8.0+)
+string result = countries.ContainsKey("UK") switch
+{
+    true => $"영국: {countries["UK"]}",
+    false => "영국 정보 없음"
+};
+Console.WriteLine(result);
+```
+
+**값 존재 확인 - ContainsValue():**
+
+`ContainsValue()`는 선형 검색(O(n))을 수행하므로 성능에 주의해야 합니다:
+
+```csharp
+Dictionary<string, int> inventory = new Dictionary<string, int>
+{
+    { "사과", 10 },
+    { "바나나", 5 },
+    { "오렌지", 0 }
+};
+
+// ContainsValue() - 시간 복잡도: O(n)
+// 주의: 모든 값을 선형 검색하므로 대용량 Dictionary에서는 비효율적
+bool hasZeroStock = inventory.ContainsValue(0);
+Console.WriteLine($"재고가 0인 품목이 있나요? {hasZeroStock}");
+// 출력: 재고가 0인 품목이 있나요? True
+
+// 값으로 키를 찾는 역방향 검색 (선형 검색 필요)
+int targetValue = 5;
+var keysWithValue = inventory
+    .Where(kvp => kvp.Value == targetValue)
+    .Select(kvp => kvp.Key)
+    .ToList();
+
+Console.WriteLine($"값이 {targetValue}인 키: {string.Join(", ", keysWithValue)}");
+// 출력: 값이 5인 키: 바나나
+```
+
+**성능 주의사항:**
+
+```csharp
+// ❌ 비효율적: ContainsValue()를 반복 호출
+foreach (int value in valuesToFind)
+{
+    if (inventory.ContainsValue(value))  // 매번 O(n) 검색
+    {
+        // ...
+    }
+}
+
+// ✅ 효율적: 값을 기준으로 검색이 빈번하다면 역방향 Dictionary 구축
+var reverseDict = inventory
+    .GroupBy(kvp => kvp.Value)
+    .ToDictionary(g => g.Key, g => g.Select(kvp => kvp.Key).ToList());
+
+// 이제 값으로 키를 O(1)에 찾을 수 있음
+if (reverseDict.ContainsKey(5))
+{
+    List<string> keys = reverseDict[5];
+    Console.WriteLine($"값이 5인 키들: {string.Join(", ", keys)}");
+}
+```
+
+**Dictionary 순회의 다양한 방법:**
+
+Dictionary를 순회하는 것은 내부 해시 테이블의 모든 버킷을 탐색하는 O(n) 연산입니다:
+
+```csharp
+Dictionary<string, int> scores = new Dictionary<string, int>
+{
+    { "홍길동", 85 },
+    { "김철수", 92 },
+    { "이영희", 78 },
+    { "박민수", 95 }
+};
+
+// 방법 1: KeyValuePair<TKey, TValue> 사용 (명시적)
+Console.WriteLine("=== KeyValuePair 사용 ===");
+foreach (KeyValuePair<string, int> item in scores)
+{
+    Console.WriteLine($"{item.Key}: {item.Value}점");
+}
+
+// 방법 2: var 키워드 사용 (권장, 가독성 우수)
+Console.WriteLine("\n=== var 사용 ===");
+foreach (var item in scores)
+{
+    Console.WriteLine($"{item.Key}: {item.Value}점");
+}
+
+// 방법 3: Deconstruction 사용 (C# 7.0+, 가장 간결)
+Console.WriteLine("\n=== Deconstruction 사용 ===");
+foreach (var (name, score) in scores)
+{
+    Console.WriteLine($"{name}: {score}점");
+}
+
+// 방법 4: 키만 순회 (Keys 컬렉션)
+Console.WriteLine("\n=== 이름만 출력 ===");
+foreach (string name in scores.Keys)
+{
+    Console.WriteLine(name);
+    // 필요시 값 접근: scores[name]
+}
+
+// 방법 5: 값만 순회 (Values 컬렉션)
+Console.WriteLine("\n=== 점수만 출력 ===");
+foreach (int score in scores.Values)
+{
+    Console.WriteLine($"{score}점");
+}
+
+// 방법 6: LINQ를 활용한 고급 순회
+Console.WriteLine("\n=== 90점 이상만 출력 ===");
+foreach (var (name, score) in scores.Where(kvp => kvp.Value >= 90))
+{
+    Console.WriteLine($"{name}: {score}점");
+}
+
+// 정렬된 순서로 순회
+Console.WriteLine("\n=== 점수순 정렬 ===");
+foreach (var (name, score) in scores.OrderByDescending(kvp => kvp.Value))
+{
+    Console.WriteLine($"{name}: {score}점");
+}
+```
+
+**순회 중 수정 주의사항:**
+
+```csharp
+Dictionary<string, int> data = new Dictionary<string, int>
+{
+    { "A", 1 },
+    { "B", 2 },
+    { "C", 3 }
+};
+
+// ❌ 잘못된 방법: 순회 중 항목 추가/제거
+try
+{
+    foreach (var key in data.Keys)
+    {
+        if (data[key] == 2)
+        {
+            data.Remove(key);  // InvalidOperationException 발생!
+        }
+    }
+}
+catch (InvalidOperationException ex)
+{
+    Console.WriteLine($"오류: 순회 중 컬렉션이 수정되었습니다.");
+}
+
+// ✅ 올바른 방법 1: Keys를 리스트로 복사
+foreach (var key in data.Keys.ToList())  // ToList()로 복사본 생성
+{
+    if (data[key] == 2)
+    {
+        data.Remove(key);  // 안전함
+    }
+}
+
+// ✅ 올바른 방법 2: 제거할 키를 먼저 수집
+var keysToRemove = data.Where(kvp => kvp.Value == 2).Select(kvp => kvp.Key).ToList();
+foreach (var key in keysToRemove)
+{
+    data.Remove(key);
+}
+```
+
+**요소 제거 연산:**
+
+```csharp
+Dictionary<string, string> users = new Dictionary<string, string>
+{
+    { "user1", "홍길동" },
+    { "user2", "김철수" },
+    { "user3", "이영희" }
+};
+
+// Remove() - 단일 항목 제거
+// 시간 복잡도: 평균 O(1)
+bool removed = users.Remove("user2");
+Console.WriteLine($"제거 성공: {removed}");  // 출력: 제거 성공: True
+
+// 없는 키 제거 시도
+bool notRemoved = users.Remove("user99");
+Console.WriteLine($"제거 성공: {notRemoved}");  // 출력: 제거 성공: False
+
+// TryGetValue와 Remove 조합 (값도 필요한 경우)
+if (users.TryGetValue("user1", out string userName))
+{
+    Console.WriteLine($"{userName}을 제거합니다.");
+    users.Remove("user1");
+}
+
+// Clear() - 모든 항목 제거
+// 시간 복잡도: O(n), 하지만 버킷 배열은 유지
+users.Clear();
+Console.WriteLine($"남은 항목 수: {users.Count}");  // 출력: 남은 항목 수: 0
+
+// 메모리 완전 해제 (필요시)
+users.TrimExcess();  // 내부 버킷 배열 최소화
+```
+
+**Keys와 Values 컬렉션의 특성:**
+
+```csharp
+Dictionary<string, int> dict = new Dictionary<string, int>
+{
+    { "A", 1 },
+    { "B", 2 },
+    { "C", 3 }
+};
+
+// Keys와 Values는 Dictionary.KeyCollection, Dictionary.ValueCollection 타입
+// 실시간 뷰(Live View)이므로 Dictionary 변경 시 자동 반영
+var keys = dict.Keys;
+var values = dict.Values;
+
+Console.WriteLine($"키 개수: {keys.Count}");  // 3
+
+// Dictionary에 항목 추가
+dict["D"] = 4;
+
+// Keys와 Values에 즉시 반영됨
+Console.WriteLine($"키 개수: {keys.Count}");  // 4
+
+// 배열이나 List로 변환하여 스냅샷 확보
+string[] keySnapshot = dict.Keys.ToArray();
+List<int> valueSnapshot = dict.Values.ToList();
+```
+
+**실전 활용 예제 - 캐시 관리:**
+
+```csharp
+class SimpleCache<TKey, TValue>
+{
+    private Dictionary<TKey, (TValue Value, DateTime ExpiryTime)> _cache 
+        = new Dictionary<TKey, (TValue, DateTime)>();
+    private readonly TimeSpan _defaultTTL = TimeSpan.FromMinutes(5);
+
+    public void Set(TKey key, TValue value)
+    {
+        _cache[key] = (value, DateTime.Now.Add(_defaultTTL));
+    }
+
+    public bool TryGet(TKey key, out TValue value)
+    {
+        if (_cache.TryGetValue(key, out var cached))
+        {
+            if (DateTime.Now < cached.ExpiryTime)
+            {
+                value = cached.Value;
+                return true;
+            }
+            else
+            {
+                _cache.Remove(key);  // 만료된 항목 제거
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    public void CleanExpired()
+    {
+        var expiredKeys = _cache
+            .Where(kvp => DateTime.Now >= kvp.Value.ExpiryTime)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var key in expiredKeys)
+        {
+            _cache.Remove(key);
+        }
+
+        Console.WriteLine($"{expiredKeys.Count}개의 만료된 항목 제거됨");
+    }
+}
+```
+
+**주요 메서드와 속성 요약:**
+
+| 메서드/속성 | 설명 | 시간 복잡도 | 비고 |
+|------------|------|-------------|------|
+| `ContainsKey(key)` | 키 존재 확인 | 평균 O(1) | 빠르고 안전 |
+| `ContainsValue(value)` | 값 존재 확인 | O(n) | 선형 검색, 주의 |
+| `Keys` | 모든 키 컬렉션 | - | 실시간 뷰 |
+| `Values` | 모든 값 컬렉션 | - | 실시간 뷰 |
+| `Remove(key)` | 키로 항목 제거 | 평균 O(1) | bool 반환 |
+| `Clear()` | 모든 항목 제거 | O(n) | 버킷 유지 |
+| `Count` | 항목 개수 | O(1) | 속성 |
+| `TrimExcess()` | 여유 공간 제거 | O(n) | 메모리 최적화 |
+
+**주요 메서드와 속성:**
+- `Add(key, value)`: 키-값 쌍 추가
+- `ContainsKey(key)`: 키 존재 여부 확인
+- `ContainsValue(value)`: 값 존재 여부 확인
+- `TryGetValue(key, out value)`: 안전한 값 조회
+- `Remove(key)`: 특정 키 제거
+- `Clear()`: 모든 항목 제거
+- `Keys`: 모든 키 컬렉션
+- `Values`: 모든 값 컬렉션
+- `Count`: 항목 개수
+
+---
+
+## 5장 정리 및 회고
+
+이 장에서는 C# 컬렉션 프레임워크의 양대 기둥인 `List<T>`와 `Dictionary<TKey, TValue>`를 심층적으로 탐구했습니다. 이 두 자료구조는 단순한 데이터 저장소를 넘어서, 수십 년간 축적된 컴퓨터 과학의 지혜와 .NET 플랫폼의 공학적 정교함이 결합된 산물입니다. 배열의 고정성을 극복한 동적 배열(List)과 키-값 연관을 O(1)에 처리하는 해시 테이블(Dictionary)은, 현대 소프트웨어 개발의 거의 모든 영역에서 필수불가결한 도구입니다.
+
+### 핵심 개념 정리
+
+**1. List<T> - 동적 배열의 완벽한 구현**
+
+List<T>는 배열의 빠른 인덱스 접근(O(1))과 동적 크기 조정을 결합하여, 대부분의 순차 데이터 관리 시나리오에서 최적의 선택이 되었습니다:
+
+- **내부 구조**: 제네릭 배열 기반, Capacity와 Count 분리 관리
+- **용량 전략**: 기하급수적 확장(2배씩 증가)으로 분할 상환 O(1) 추가 성능 달성
+- **핵심 연산**: 
+  - 끝에 추가: 분할 상환 O(1)
+  - 인덱스 접근: O(1)
+  - 중간 삽입/삭제: O(n)
+  - 검색: 선형 O(n), 이진 O(log n) (정렬 시)
+  - 정렬: O(n log n) (IntroSort 알고리즘)
+
+**실무 활용 포인트:**
+- 초기 용량 설정으로 재할당 최소화
+- `TryGetValue` 패턴으로 안전한 요소 접근
+- LINQ와 조합하여 선언적 데이터 처리
+- `FindAll`보다는 LINQ `Where`로 지연 평가 활용
+
+**2. Dictionary<TKey, TValue> - 해시 테이블의 현대적 구현**
+
+Dictionary는 해시 함수를 통한 직접 주소 지정으로 평균 O(1) 시간 복잡도의 삽입, 검색, 삭제를 제공합니다:
+
+- **내부 구조**: 버킷 배열 + 체이닝 방식 충돌 해결
+- **해싱 메커니즘**: `GetHashCode()` + 동등성 비교(`Equals()`)
+- **로드 팩터**: 약 0.75 초과 시 재해싱으로 성능 유지
+- **핵심 연산**:
+  - 추가/검색/삭제: 평균 O(1), 최악 O(n)
+  - 키 존재 확인: 평균 O(1)
+  - 값 존재 확인: O(n) (선형 검색)
+
+**실무 활용 포인트:**
+- `TryGetValue`로 예외 없는 안전한 조회
+- 초기 용량 설정으로 재해싱 방지
+- 불변 객체를 키로 사용 (string, int, Guid 등)
+- 빈번한 값 검색 시 역방향 Dictionary 고려
+
+### 컬렉션 선택 가이드
+
+| 요구사항 | 추천 컬렉션 | 이유 |
+|----------|-------------|------|
+| 순서 있는 데이터, 인덱스 접근 | `List<T>` | O(1) 인덱스 접근, 동적 크기 |
+| 키-값 연관, 빠른 검색 | `Dictionary<TKey, TValue>` | O(1) 키 기반 조회 |
+| 고유 값만 저장 | `HashSet<T>` | O(1) 중복 제거 |
+| 순서 보장 + 고유성 | `SortedSet<T>` | 정렬된 고유 집합 |
+| FIFO 큐 | `Queue<T>` | 선입선출 |
+| LIFO 스택 | `Stack<T>` | 후입선출 |
+
+### 성능 최적화 원칙
+
+1. **용량 사전 할당**: 최종 크기를 예측할 수 있다면 생성자에 용량 지정
+2. **적절한 초기 크기**: 너무 크면 메모리 낭비, 너무 작으면 재할당 빈번
+3. **안전한 조회 패턴**: 예외 처리 대신 `TryGetValue` 사용
+4. **LINQ 지연 평가 활용**: `Where().FirstOrDefault()`로 조기 종료
+5. **불변성 고려**: 가능하면 불변 컬렉션으로 부작용 방지
+
+### 실습 문제
+
+**문제 1: 학생 관리 시스템**
+
+```csharp
+// List를 활용한 학생 이름 관리
+List<string> students = new List<string> { "김철수", "이영희", "박민수" };
+students.Add("최지혜");
+students.Sort();
+Console.WriteLine(string.Join(", ", students));
+// 출력: 김철수, 박민수, 이영희, 최지혜
+```
+
+**문제 2: 제품 가격 조회**
+
+```csharp
+// Dictionary를 활용한 제품 가격 관리
+var products = new Dictionary<string, int>
+{
+    ["노트북"] = 1500000,
+    ["마우스"] = 35000,
+    ["키보드"] = 120000
+};
+
+if (products.TryGetValue("노트북", out int price))
+{
+    Console.WriteLine($"노트북 가격: {price:C0}");  // 출력: 노트북 가격: ₩1,500,000
+}
+```
+
+**문제 3: 짝수 필터링**
+
+```csharp
+// FindAll과 LINQ 비교
+List<int> numbers = Enumerable.Range(1, 10).ToList();
+
+// 방법 1: FindAll
+List<int> evens1 = numbers.FindAll(n => n % 2 == 0);
+
+// 방법 2: LINQ (지연 평가)
+var evens2 = numbers.Where(n => n % 2 == 0).ToList();
+
+Console.WriteLine(string.Join(", ", evens2));  // 출력: 2, 4, 6, 8, 10
+```
+
+### 소프트웨어 공학적 통찰
+
+이 장을 통해 우리는 단순히 컬렉션을 "사용하는" 수준을 넘어, 그 내부 작동 원리와 설계 철학을 이해하게 되었습니다. 이러한 깊이 있는 이해는:
+
+1. **알고리즘 선택**: 상황에 맞는 최적의 자료구조를 선택할 수 있는 통찰력을 제공합니다.
+2. **성능 최적화**: 시간/공간 복잡도를 고려한 효율적인 코드를 작성할 수 있게 합니다.
+3. **버그 예방**: 일반적인 함정(순회 중 수정, 해시 충돌 등)을 미리 인지하고 회피할 수 있습니다.
+4. **코드 품질**: 예외 처리, null 안전성, 불변성 등 현대 프로그래밍의 모범 사례를 체득합니다.
+
+### 다음 단계로 나아가기
+
+컬렉션은 C# 프로그래밍의 핵심 도구이지만, 시작에 불과합니다. 실무에서는:
+
+- **LINQ(6부 참조)**: 컬렉션을 선언적으로 쿼리하고 변환하는 강력한 도구
+- **Concurrent Collections**: 멀티스레드 환경에서 안전한 컬렉션 (`ConcurrentDictionary` 등)
+- **Immutable Collections**: 함수형 프로그래밍을 위한 불변 컬렉션
+- **Custom Collections**: `IEnumerable<T>`, `ICollection<T>` 구현으로 특화된 자료구조 생성
+
+이러한 고급 주제들은 이 장에서 다룬 기초 위에 구축됩니다. List와 Dictionary를 완전히 마스터하면, 더 복잡한 컬렉션과 디자인 패턴을 이해하는 데 탄탄한 기반이 됩니다.
+
+### 다음 장 예고
+
+**6장. 문자열 처리**에서는 프로그래밍에서 가장 보편적으로 다루는 데이터 타입인 문자열을 심층적으로 탐구합니다. 문자열의 불변성 개념, 다양한 조작 메서드, 정규표현식을 통한 패턴 매칭, 그리고 `StringBuilder`를 활용한 성능 최적화 기법을 학습하게 됩니다. 문자열은 단순해 보이지만, 그 내부에는 Unicode 인코딩, 메모리 최적화(String Interning), 문화권별 처리 등 복잡하고 흥미로운 개념들이 숨어 있습니다. 이러한 지식은 텍스트 처리, 파싱, 직렬화 등 실무의 많은 영역에서 필수적입니다.

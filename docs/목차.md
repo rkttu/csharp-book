@@ -1,0 +1,410 @@
+# C# 프로그래밍 실습 - 목차
+
+Visual Studio Code와 .NET 10 File-based App을 활용한 C# 프로그래밍 학습서
+
+---
+
+## 제1부: 시작하기
+
+### 1장. 개발 환경 구축
+- 1.1 Visual Studio Code 설치
+- 1.2 .NET 10 SDK 설치 및 확인
+- 1.3 C# 확장 프로그램 설치
+- 1.4 첫 번째 File-based App 만들기
+- 1.5 실행 및 디버깅
+
+### 2장. C# 기초 문법
+- 2.1 변수와 데이터 타입
+  - 2.1.1 기본 데이터 타입 (int, string, bool, double)
+  - 2.1.2 var 키워드와 타입 추론
+  - 2.1.3 상수 (const)
+- 2.2 연산자
+  - 2.2.1 산술 연산자
+  - 2.2.2 비교 연산자
+  - 2.2.3 논리 연산자
+  - 2.2.4 대입 연산자
+- 2.3 콘솔 입출력
+  - 2.3.1 Console.WriteLine()
+  - 2.3.2 Console.ReadLine()
+  - 2.3.3 문자열 보간 (String Interpolation)
+- 2.4 주석 작성하기
+
+### 3장. 제어문
+- 3.1 조건문
+  - 3.1.1 if 문
+  - 3.1.2 else if와 else
+  - 3.1.3 switch 문과 패턴 매칭
+  - 3.1.4 switch 식 (Switch Expression)
+- 3.2 반복문
+  - 3.2.1 for 문
+  - 3.2.2 while 문
+  - 3.2.3 do-while 문
+  - 3.2.4 foreach 문
+- 3.3 분기문
+  - 3.3.1 break
+  - 3.3.2 continue
+  - 3.3.3 return
+
+---
+
+## 제2부: 데이터 구조와 컬렉션
+
+### 4장. 배열
+- 4.1 1차원 배열
+  - 4.1.1 배열 선언과 초기화
+  - 4.1.2 배열 요소 접근
+  - 4.1.3 배열 순회
+- 4.2 다차원 배열
+  - 4.2.1 2차원 배열
+  - 4.2.2 가변 배열 (Jagged Array)
+- 4.3 배열 관련 메서드
+  - 4.3.1 Array.Sort()
+  - 4.3.2 Array.Reverse()
+  - 4.3.3 Array.IndexOf()
+
+### 5장. 컬렉션
+- 5.1 List<T>
+  - 5.1.1 요소 추가 및 제거
+  - 5.1.2 요소 검색
+  - 5.1.3 정렬과 필터링
+- 5.2 Dictionary<TKey, TValue>
+  - 5.2.1 키-값 쌍 추가
+  - 5.2.2 키로 값 조회
+  - 5.2.3 키 존재 여부 확인
+- 5.3 기타 컬렉션
+  - 5.3.1 HashSet<T>
+  - 5.3.2 Queue<T>
+  - 5.3.3 Stack<T>
+
+### 6장. 문자열 처리
+- 6.1 문자열 기본 연산
+  - 6.1.1 문자열 연결
+  - 6.1.2 문자열 비교
+  - 6.1.3 문자열 길이
+- 6.2 문자열 메서드
+  - 6.2.1 Substring()
+  - 6.2.2 Replace()
+  - 6.2.3 Split()
+  - 6.2.4 Trim(), ToUpper(), ToLower()
+- 6.3 StringBuilder
+  - 6.3.1 StringBuilder의 필요성
+  - 6.3.2 효율적인 문자열 조작
+
+---
+
+## 제3부: 함수와 메서드
+
+### 7장. 메서드 기초
+- 7.1 메서드 정의와 호출
+- 7.2 매개변수와 반환값
+  - 7.2.1 값 타입 매개변수
+  - 7.2.2 참조 타입 매개변수
+  - 7.2.3 ref와 out 키워드
+- 7.3 메서드 오버로딩
+- 7.4 선택적 매개변수와 명명된 인수
+- 7.5 로컬 함수 (Local Functions)
+
+### 8장. 고급 메서드 활용
+- 8.1 람다 식 (Lambda Expressions)
+  - 8.1.1 람다 식 기본 문법
+  - 8.1.2 Func와 Action 델리게이트
+- 8.2 확장 메서드 (Extension Methods)
+- 8.3 재귀 함수
+
+---
+
+## 제4부: 객체지향 프로그래밍
+
+### 9장. 클래스와 객체
+- 9.1 클래스 정의
+  - 9.1.1 필드와 속성
+  - 9.1.2 메서드
+  - 9.1.3 생성자
+- 9.2 객체 생성과 사용
+- 9.3 접근 제한자
+  - 9.3.1 public
+  - 9.3.2 private
+  - 9.3.3 protected
+  - 9.3.4 internal
+- 9.4 정적 멤버 (Static Members)
+  - 9.4.1 정적 필드와 속성
+  - 9.4.2 정적 메서드
+  - 9.4.3 정적 생성자
+
+### 10장. 상속과 다형성
+- 10.1 상속 (Inheritance)
+  - 10.1.1 기본 클래스와 파생 클래스
+  - 10.1.2 base 키워드
+  - 10.1.3 메서드 오버라이딩
+- 10.2 추상 클래스 (Abstract Class)
+- 10.3 인터페이스 (Interface)
+  - 10.3.1 인터페이스 정의와 구현
+  - 10.3.2 다중 인터페이스 구현
+  - 10.3.3 기본 인터페이스 메서드
+- 10.4 다형성 (Polymorphism)
+
+### 11장. 고급 객체지향 개념
+- 11.1 sealed 클래스와 메서드
+- 11.2 record 타입
+  - 11.2.1 record 기본 사용법
+  - 11.2.2 with 식을 사용한 비파괴적 변경
+- 11.3 구조체 (Struct)
+  - 11.3.1 struct vs class
+  - 11.3.2 record struct
+- 11.4 열거형 (Enum)
+
+---
+
+## 제5부: 예외 처리와 파일 I/O
+
+### 12장. 예외 처리
+- 12.1 예외란 무엇인가?
+- 12.2 try-catch-finally
+  - 12.2.1 기본 예외 처리
+  - 12.2.2 여러 catch 블록
+  - 12.2.3 finally 블록
+- 12.3 예외 던지기 (throw)
+- 12.4 사용자 정의 예외
+- 12.5 예외 필터 (Exception Filters)
+
+### 13장. 파일 입출력
+- 13.1 텍스트 파일 읽기
+  - 13.1.1 File.ReadAllText()
+  - 13.1.2 File.ReadAllLines()
+  - 13.1.3 StreamReader 사용
+- 13.2 텍스트 파일 쓰기
+  - 13.2.1 File.WriteAllText()
+  - 13.2.2 File.WriteAllLines()
+  - 13.2.3 StreamWriter 사용
+- 13.3 파일과 디렉터리 관리
+  - 13.3.1 File 클래스
+  - 13.3.2 Directory 클래스
+  - 13.3.3 Path 클래스
+- 13.4 JSON 데이터 처리
+  - 13.4.1 System.Text.Json 소개
+  - 13.4.2 JSON 직렬화
+  - 13.4.3 JSON 역직렬화
+
+---
+
+## 제6부: LINQ와 함수형 프로그래밍
+
+### 14장. LINQ 기초
+- 14.1 LINQ란?
+- 14.2 쿼리 구문 vs 메서드 구문
+- 14.3 기본 LINQ 연산자
+  - 14.3.1 Where (필터링)
+  - 14.3.2 Select (투영)
+  - 14.3.3 OrderBy / OrderByDescending (정렬)
+- 14.4 집계 연산자
+  - 14.4.1 Count, Sum, Average
+  - 14.4.2 Min, Max
+  - 14.4.3 Aggregate
+
+### 15장. 고급 LINQ
+- 15.1 조인 연산자
+  - 15.1.1 Join
+  - 15.1.2 GroupJoin
+- 15.2 그룹화
+  - 15.2.1 GroupBy
+- 15.3 집합 연산자
+  - 15.3.1 Distinct
+  - 15.3.2 Union, Intersect, Except
+- 15.4 지연 실행 (Deferred Execution)
+- 15.5 즉시 실행 (Immediate Execution)
+
+### 16장. 함수형 프로그래밍 개념
+- 16.1 불변성 (Immutability)
+- 16.2 순수 함수 (Pure Functions)
+- 16.3 고차 함수 (Higher-Order Functions)
+- 16.4 커링 (Currying)과 부분 적용
+
+---
+
+## 제7부: 비동기 프로그래밍
+
+### 17장. 비동기 프로그래밍 기초
+- 17.1 동기 vs 비동기
+- 17.2 async와 await 키워드
+- 17.3 Task와 Task<T>
+- 17.4 비동기 메서드 작성하기
+- 17.5 비동기 메서드 호출과 대기
+
+### 18장. 고급 비동기 패턴
+- 18.1 여러 Task 다루기
+  - 18.1.1 Task.WhenAll
+  - 18.1.2 Task.WhenAny
+- 18.2 취소 토큰 (CancellationToken)
+- 18.3 비동기 스트림 (IAsyncEnumerable<T>)
+- 18.4 ConfigureAwait
+
+---
+
+## 제8부: 실전 프로젝트
+
+### 19장. 콘솔 계산기 만들기
+- 19.1 요구사항 분석
+- 19.2 기본 연산 구현
+- 19.3 메뉴 시스템 추가
+- 19.4 예외 처리 및 유효성 검증
+- 19.5 연산 기록 기능
+
+### 20장. 할 일 관리 앱
+- 20.1 데이터 모델 설계
+- 20.2 할 일 추가, 조회, 수정, 삭제
+- 20.3 파일로 데이터 저장 및 불러오기
+- 20.4 LINQ를 활용한 검색 및 필터링
+- 20.5 우선순위 및 마감일 관리
+
+### 21장. 간단한 텍스트 기반 게임
+- 21.1 게임 설계
+- 21.2 플레이어와 적 클래스 구현
+- 21.3 전투 시스템
+- 21.4 아이템 시스템
+- 21.5 게임 진행 및 저장
+
+### 22장. REST API 클라이언트
+- 22.1 HttpClient 소개
+- 22.2 GET 요청으로 데이터 받기
+- 22.3 POST 요청으로 데이터 전송하기
+- 22.4 JSON 데이터 파싱
+- 22.5 실제 공개 API와 연동하기
+
+---
+
+## 제9부: .NET 생태계와 도구
+
+### 23장. NuGet 패키지 관리
+- 23.1 NuGet이란?
+- 23.2 패키지 설치 및 제거
+- 23.3 유용한 NuGet 패키지 소개
+  - 23.3.1 Newtonsoft.Json
+  - 23.3.2 Serilog
+  - 23.3.3 Dapper
+
+### 24장. 단위 테스트
+- 24.1 단위 테스트란?
+- 24.2 xUnit 설정
+- 24.3 첫 번째 테스트 작성
+- 24.4 Arrange-Act-Assert 패턴
+- 24.5 테스트 데이터와 매개변수화된 테스트
+- 24.6 Moq를 이용한 Mocking
+
+### 25장. 디버깅과 로깅
+- 25.1 Visual Studio Code 디버거 사용
+  - 25.1.1 중단점 (Breakpoints)
+  - 25.1.2 변수 검사
+  - 25.1.3 조건부 중단점
+- 25.2 로깅
+  - 25.2.1 Console.WriteLine vs 로깅 프레임워크
+  - 25.2.2 Microsoft.Extensions.Logging
+  - 25.2.3 로그 레벨
+
+---
+
+## 제10부: 모던 C# 기능
+
+### 26장. C# 10-14 주요 기능
+**제1부: C# 10 주요 기능**
+- 26.1 Global using 지시문
+- 26.2 File-scoped 네임스페이스
+- 26.3 개선된 람다 식
+- 26.4 Record struct
+- 26.5 필수 속성 (Required Properties)
+
+**제2부: C# 11 주요 기능**
+- 26.6 Raw String Literals (원시 문자열 리터럴)
+- 26.7 Generic Attributes (제네릭 특성)
+- 26.8 List Patterns (리스트 패턴)
+- 26.9 Required Members (필수 멤버)
+- 26.10 File-local Types (파일 범위 타입)
+- 26.11 기타 C# 11 개선사항
+- 26.12 실전 종합 예제
+
+**제3부: C# 12 주요 기능**
+- 26.13 Primary Constructors (주 생성자)
+- 26.14 Collection Expressions (컬렉션 식)
+- 26.15 Default Lambda Parameters (람다 기본 매개변수)
+- 26.16 Alias Any Type (타입 별칭 확장)
+- 26.17 Inline Arrays (인라인 배열)
+- 26.18 ref readonly Parameters
+- 26.19 실전 종합 예제
+
+**제4부: C# 13 주요 기능**
+- 26.20 params Collections (params 컬렉션)
+- 26.21 New Lock Type and Semantics (새로운 lock 타입)
+- 26.22 New Escape Sequence: \e
+- 26.23 ref struct Types Implement Interfaces
+- 26.24 Allow ref and unsafe in Async and Iterator Methods
+- 26.25 Implicit Indexer Access in Object Initializers
+- 26.26 Overload Resolution Priority
+- 26.27 실전 종합 예제
+
+**제5부: C# 14 프리뷰 기능**
+- 26.28 Field Keyword (필드 키워드)
+- 26.29 Extensions (확장 타입)
+- 26.30 Discriminated Unions (판별된 합 타입)
+- 26.31 패턴 매칭 개선
+- 26.32 성능 최적화
+- 26.33 기타 예상 기능
+- 26.34 실전 종합 예제
+
+### 27장. 패턴 매칭
+- 27.1 타입 패턴
+- 27.2 속성 패턴
+- 27.3 위치 패턴
+- 27.4 관계 패턴
+- 27.5 논리 패턴
+
+### 28장. Nullable 참조 타입
+- 28.1 Nullable 참조 타입이란?
+- 28.2 프로젝트에서 활성화하기
+- 28.3 null 허용 및 불허 타입
+- 28.4 null 병합 연산자 (??, ??=)
+- 28.5 null 조건부 연산자 (?., ?[])
+
+### 29장. 성능과 메모리 최적화
+- 29.1 Span<T>과 Memory<T>
+- 29.2 ValueTask
+- 29.3 구조체 최적화
+- 29.4 string vs StringBuilder 성능
+- 29.5 컬렉션 선택 가이드
+
+---
+
+## 부록
+
+### 부록 A. C# 버전 히스토리
+- A.1 C# 1.0 ~ 5.0
+- A.2 C# 6.0 ~ 9.0
+- A.3 C# 10 주요 변경사항
+- A.4 C# 11 (2022년) - 문자열과 제네릭의 진화
+- A.5 C# 12 (2023년) - 간결성의 극대화
+- A.6 C# 13 (2024년) - 성능과 유연성
+- A.7 C# 14 (2025년, 프리뷰) - 미래를 향한 진화
+- A.8 C# 11-14 요약표
+
+### 부록 B. .NET CLI 명령어
+- B.1 프로젝트 관리
+- B.2 빌드와 실행
+- B.3 패키지 관리
+- B.4 테스트 실행
+
+### 부록 C. Visual Studio Code 단축키
+- C.1 기본 편집
+- C.2 코드 탐색
+- C.3 디버깅
+- C.4 터미널
+
+### 부록 D. 추가 학습 리소스
+- D.1 공식 문서
+- D.2 온라인 커뮤니티
+- D.3 추천 도서
+- D.4 유용한 웹사이트
+
+---
+
+## 마치며
+- 다음 단계로 나아가기
+- 실무 프로젝트 시작하기
+- 계속 학습하는 방법

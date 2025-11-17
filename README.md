@@ -2,6 +2,17 @@
 
 Visual Studio Code와 .NET 10 File-based App을 활용한 C# 프로그래밍 학습서
 
+> **📢 AI 콘텐츠 생성에 대한 안내**  
+> 이 학습서의 콘텐츠는 AI(인공지능)를 활용하여 생성되었습니다.  
+> 내용의 정확성을 위해 최선을 다하고 있으나, 오류나 개선이 필요한 부분이 있을 수 있습니다.  
+> 피드백이나 수정 제안은 [GitHub Issues](https://github.com/rkttu/csharp-book/issues)를 통해 제보해 주세요.
+
+## 🌐 온라인 웹사이트
+
+이 학습서는 GitHub Pages를 통해 온라인 웹사이트로 제공됩니다:
+
+**👉 [https://rkttu.github.io/csharp-book/](https://rkttu.github.io/csharp-book/)**
+
 ## 소개
 
 이 책은 Visual Studio Code와 .NET 10의 새로운 File-based App 기능만을 사용하여 C# 프로그래밍을 처음부터 배우고 실습할 수 있도록 구성된 학습서입니다. 복잡한 프로젝트 구조 없이 간단한 `.cs` 파일 하나로 시작하여 점진적으로 C#의 강력한 기능들을 익혀나갈 수 있습니다.
@@ -63,3 +74,8 @@ dotnet run
 ## 기여하기
 
 이 책에 대한 피드백, 오류 수정, 개선 제안은 언제나 환영합니다.
+
+- **이슈 등록**: [GitHub Issues](https://github.com/rkttu/csharp-book/issues)에서 문제를 보고하거나 제안을 남겨주세요.
+- **질문 및 토론**: GitHub Issues를 통해 질문하시면 커뮤니티가 도움을 드립니다.
+
+이 프로젝트의 콘텐츠는 AI를 활용하여 생성되었으며, 지속적으로 개선하고 있습니다.

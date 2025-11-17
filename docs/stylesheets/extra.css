@@ -1,0 +1,64 @@
+/* Custom CSS for C# Programming Book */
+
+:root {
+  --md-primary-fg-color: #5c6bc0;
+  --md-accent-fg-color: #5c6bc0;
+}
+
+/* Korean font improvements */
+body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  word-break: keep-all;
+  word-wrap: break-word;
+}
+
+/* Code blocks with better Korean support */
+code {
+  font-family: 'Roboto Mono', 'D2Coding', 'Consolas', monospace;
+}
+
+/* Improve admonition styling */
+.admonition {
+  margin: 1.5625em 0;
+  padding: 0.6rem 0.8rem;
+  border-left: 0.2rem solid;
+  border-radius: 0.2rem;
+}
+
+/* Custom styling for AI attribution */
+.admonition.info {
+  border-left-color: #448aff;
+}
+
+/* Table improvements for Korean content */
+table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Better spacing for Korean text */
+h1, h2, h3, h4, h5, h6 {
+  word-break: keep-all;
+}
+
+/* Improve navigation for Korean text */
+.md-nav__title {
+  word-break: keep-all;
+}
+
+/* Footer customization */
+.md-footer-meta {
+  background-color: var(--md-footer-bg-color);
+}
+
+/* Print improvements */
+@media print {
+  body {
+    font-size: 12pt;
+  }
+  
+  code {
+    page-break-inside: avoid;
+  }
+}
