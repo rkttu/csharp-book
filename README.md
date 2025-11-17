@@ -34,7 +34,7 @@ Visual Studio Code와 .NET 10 File-based App을 활용한 C# 프로그래밍 학
 
 ## 목차
 
-전체 목차는 [목차.md](./목차.md) 파일을 참고하세요.
+전체 목차는 [docs/index.md](./docs/index.md) 파일을 참고하세요.
 
 ### 주요 내용
 
@@ -51,9 +51,9 @@ Visual Studio Code와 .NET 10 File-based App을 활용한 C# 프로그래밍 학
 
 ## 필요한 준비물
 
-- Windows, macOS, 또는 Linux 운영체제
-- Visual Studio Code (최신 버전)
 - .NET 10 SDK
+- Visual Studio Code (최신 버전)
+- macOS, Linux, 또는 Windows 운영체제
 - C# 확장 프로그램 (VS Code)
 
 ## 시작하기
