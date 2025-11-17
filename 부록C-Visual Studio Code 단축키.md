@@ -390,38 +390,289 @@ public class Example
 
 이는 대형 메서드나 클래스의 범위를 빠르게 확인하거나, 블록의 끝에서 시작으로 돌아갈 때 유용합니다.
 
-### 선택 및 다중 커서
+### 선택과 다중 커서: 동시 편집의 혁명
+
+다중 커서(Multiple Cursors)는 Sublime Text가 2011년에 대중화한 혁명적 기능으로, 여러 위치에서 동시에 편집 작업을 수행할 수 있게 합니다. 이는 반복적인 편집 작업을 마치 "시간을 멈추고 여러 곳을 동시에 수정하는 것"처럼 만들어, 개발자의 생산성을 비약적으로 향상시켰습니다. Steve Klabnik(Rust 핵심 개발자)은 "다중 커서를 배운 후 이전 방식으로 돌아갈 수 없다"고 말했습니다.
 
 ```
-Shift+Left/Right        문자 단위 선택
-Shift+Up/Down           줄 단위 선택
-Ctrl+Shift+Left/Right   단어 단위 선택
-Ctrl+A (Cmd+A)          전체 선택
-Alt+Click               다중 커서 추가
-Ctrl+Alt+Up/Down        위/아래에 커서 추가
-Ctrl+D                  다음 일치 항목 선택
-Ctrl+Shift+L            모든 일치 항목 선택
+Shift+Left/Right (Shift+←/→)     문자 단위 선택
+Shift+Up/Down (Shift+↑/↓)        줄 단위 선택
+Ctrl+Shift+Left/Right            단어 단위 선택
+Ctrl+A (Cmd+A)                   전체 선택
+Ctrl+L (Cmd+L)                   현재 줄 선택 (반복 시 다음 줄 추가)
+Ctrl+D (Cmd+D)                   다음 일치 항목 선택 추가
+Ctrl+K Ctrl+D                    마지막 선택 건너뛰기
+Ctrl+Shift+L (Cmd+Shift+L)       모든 일치 항목에 커서 생성
+Alt+Shift+I (Option+Shift+I)     선택한 줄 끝에 커서 생성
+Alt+Click (Option+Click)         클릭 위치에 커서 추가
+Ctrl+Alt+Up/Down                 위/아래에 커서 추가
+Esc                              다중 커서 해제
 ```
 
-**다중 커서 활용 예시:**
-1. 변수 이름 일괄 변경: 변수명 선택 → `Ctrl+D` 반복 → 동시 수정
-2. 여러 줄에 동일한 텍스트 추가: `Ctrl+Alt+Down`으로 커서 생성 → 입력
+**선택의 계층 구조:**
 
-### 검색 및 바꾸기
+VS Code의 선택 시스템은 계층적으로 설계되어 있습니다:
+
+1. **문자 단위** (`Shift+Left/Right`): 가장 세밀한 제어
+2. **단어 단위** (`Ctrl+Shift+Left/Right`): 식별자 경계에서 멈춤
+3. **줄 단위** (`Ctrl+L`): 전체 줄 선택, 반복 시 여러 줄
+4. **블록 단위** (`Ctrl+Shift+\\`로 괄호 매칭): 코드 블록 전체
+
+**실무 시나리오 1: 변수 이름 변경 (리팩토링 미리보기)**
+
+정식 리팩토링 도구(`F2`)를 사용하기 전에, 다중 커서로 빠르게 시뮬레이션할 수 있습니다:
+
+```csharp
+public class OrderService
+{
+    private readonly ILogger _log;  // 'log'를 'logger'로 변경하고 싶음
+    
+    public OrderService(ILogger log)
+    {
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+    }
+    
+    public void ProcessOrder(Order order)
+    {
+        _log.LogInformation("Processing order");
+        // log 사용...
+    }
+}
+```
+
+**작업 순서:**
+1. `_log` 중 하나에 커서 위치
+2. `Ctrl+D` 세 번 눌러 모든 `log` 인스턴스 선택
+3. `logger` 타이핑하여 모든 위치를 동시에 변경
+
+**주의**: 이는 빠른 편집에 유용하지만, 정식 Rename 리팩토링(`F2`)은 범위, 주석, 문자열 리터럴을 지능적으로 처리하므로 중요한 변경에는 `F2`를 사용해야 합니다.
+
+**실무 시나리오 2: 생성자 매개변수에서 필드 생성**
+
+```csharp
+public class CustomerService
+{
+    // 필드를 여기에 생성하고 싶음
+    
+    public CustomerService(
+        ICustomerRepository repository,
+        ILogger<CustomerService> logger,
+        IMapper mapper,
+        IValidator<Customer> validator)
+    {
+        // 매개변수를 필드에 할당하고 싶음
+    }
+}
+```
+
+**작업 순서:**
+1. 매개변수 줄들 전체 선택 (첫 줄에서 `Shift+Down` 반복)
+2. `Alt+Shift+I`로 각 줄 끝에 커서 생성
+3. `Home`으로 모든 커서를 줄 시작으로 이동
+4. `private readonly ` 타이핑 (모든 줄에 동시 입력)
+5. `Ctrl+Right`로 타입 이름으로 이동
+6. `End`로 줄 끝으로, `;` 추가
+
+**실무 시나리오 3: 여러 줄에 동일한 접두사/접미사 추가**
+
+```csharp
+// 여러 문자열을 한 번에 nameof()로 감싸기
+throw new ArgumentNullException(logger);
+throw new ArgumentNullException(repository);
+throw new ArgumentNullException(mapper);
+throw new ArgumentNullException(validator);
+
+// 목표:
+throw new ArgumentNullException(nameof(logger));
+throw new ArgumentNullException(nameof(repository));
+throw new ArgumentNullException(nameof(mapper));
+throw new ArgumentNullException(nameof(validator));
+```
+
+**작업 순서:**
+1. 첫 번째 변수명에 커서
+2. `Ctrl+D` 네 번으로 모든 변수명 선택
+3. `Ctrl+Right`로 단어 끝으로 이동
+4. `)` 타이핑 (모든 위치에 입력)
+5. `Ctrl+Left`로 단어 시작으로 이동
+6. `nameof(` 타이핑
+
+**다중 커서의 고급 기법: 선택 건너뛰기**
+
+때로는 패턴의 일부만 선택하고 싶을 때가 있습니다:
+
+```csharp
+var x = 10;  // 변경하고 싶지 않음
+var y = 20;  // 변경하고 싶음
+var x = 30;  // 변경하고 싶지 않음
+var z = 40;  // 변경하고 싶음
+```
+
+**작업 순서:**
+1. `var` 선택
+2. `Ctrl+D` 네 번으로 모든 `var` 선택
+3. 첫 번째와 세 번째 선택을 건너뛰고 싶음
+4. 각 위치에서 `Ctrl+K Ctrl+D`로 선택 해제
+5. 이제 두 번째와 네 번째만 선택된 상태
+
+**박스 선택 (열 모드 선택):**
+
+`Shift+Alt+드래그`로 직사각형 영역을 선택할 수 있습니다. 이는 CSV 데이터나 정렬된 코드 블록에서 유용합니다:
+
+```csharp
+// 중간 열만 선택하고 싶음
+public int    Id       { get; set; }
+public string Name     { get; set; }
+public int    Age      { get; set; }
+public bool   IsActive { get; set; }
+
+// Shift+Alt+드래그로 타입 열만 선택 가능
+```
+
+**선택 확장의 지능형 메커니즘:**
+
+VS Code는 C# 문법을 이해하여 지능적으로 선택을 확장합니다:
 
 ```
-Ctrl+F (Cmd+F)          현재 파일에서 찾기
-Ctrl+H (Cmd+H)          현재 파일에서 바꾸기
-Ctrl+Shift+F (Cmd+Shift+F)  전체 파일에서 찾기
-Ctrl+Shift+H (Cmd+Shift+H)  전체 파일에서 바꾸기
-F3 (Cmd+G)              다음 찾기
-Shift+F3 (Cmd+Shift+G)  이전 찾기
-Alt+Enter               모든 일치 항목 선택
+Alt+Shift+Right (Option+Shift+→)    선택 확장 (Expand Selection)
+Alt+Shift+Left (Option+Shift+←)     선택 축소 (Shrink Selection)
 ```
 
-**정규식 활용:**
-- 검색창에서 `.*` 아이콘을 클릭하거나 `Alt+R`로 정규식 모드를 활성화할 수 있습니다.
-- 예: `\d+`로 모든 숫자 찾기, `[A-Z]\w+`로 대문자로 시작하는 단어 찾기
+예제:
+```csharp
+public void ProcessOrder(Order order)
+{
+    var total = order.Items.Sum(i => i.Price);
+    //                              ^ 커서가 여기
+}
+
+// Alt+Shift+Right를 반복적으로 누르면:
+// 1. i.Price
+// 2. (i => i.Price)
+// 3. order.Items.Sum(i => i.Price)
+// 4. var total = order.Items.Sum(i => i.Price);
+// 5. 전체 메서드 본문
+// 6. 전체 메서드
+```
+
+이는 Treesitter 파서를 사용하여 구문 트리를 기반으로 선택을 확장하므로, 단순히 괄호 매칭보다 훨씬 지능적입니다.
+
+### 검색과 바꾸기: 정보 검색의 예술
+
+코드베이스에서 정보를 찾는 능력은 개발자의 핵심 역량입니다. Fred Brooks는 "프로그래밍의 본질은 기존 코드를 읽고 이해하는 것"이라고 했습니다. VS Code의 검색 시스템은 Ripgrep(rg)이라는 매우 빠른 검색 엔진을 사용하여, 수백만 줄의 코드에서도 밀리초 단위로 결과를 반환합니다.
+
+```
+Ctrl+F (Cmd+F)                      현재 파일 검색
+Ctrl+H (Cmd+H)                      현재 파일 검색 및 바꾸기
+Ctrl+Shift+F (Cmd+Shift+F)          전체 파일 검색
+Ctrl+Shift+H (Cmd+Shift+H)          전체 파일 검색 및 바꾸기
+F3 (Cmd+G)                          다음 찾기
+Shift+F3 (Cmd+Shift+G)              이전 찾기
+Ctrl+F3                             현재 선택 항목 찾기
+Alt+Enter                           모든 일치 항목 선택
+Alt+C                               대소문자 구분 토글
+Alt+W                               단어 단위 일치 토글
+Alt+R                               정규식 모드 토글
+Esc                                 검색 상자 닫기
+```
+
+**검색의 세 가지 모드:**
+
+VS Code는 세 가지 검색 모드를 제공합니다:
+
+1. **일반 텍스트 검색** (기본값): 입력한 문자 그대로 검색
+2. **단어 단위 검색** (`Alt+W`): 식별자 경계에서만 일치
+3. **정규식 검색** (`Alt+R`): 패턴 기반 고급 검색
+
+**단어 단위 검색의 중요성:**
+
+C# 코드에서 `log`를 검색하면 다음이 모두 일치합니다:
+- `_log` (필드)
+- `logger` (변수)
+- `LogInformation` (메서드)
+- `"Logging completed"` (문자열)
+
+`Alt+W`를 활성화하면 정확히 `log`라는 단어만 일치합니다.
+
+**정규식 검색의 강력함:**
+
+정규식은 패턴 기반 검색의 핵심입니다. C# 개발에서 자주 사용하는 패턴:
+
+**예제 1: 모든 public 메서드 찾기**
+```regex
+public\s+\w+\s+\w+\(
+```
+설명: "public" + 공백 + 타입명 + 공백 + 메서드명 + "("
+
+**예제 2: 모든 숫자 리터럴 찾기**
+```regex
+\b\d+\b
+```
+설명: 단어 경계 내의 숫자들
+
+**예제 3: TODO 주석과 작성자 찾기**
+```regex
+//\s*TODO\s*\((\w+)\):(.+)
+```
+캡처 그룹으로 작성자와 내용을 추출
+
+**예제 4: 미사용 private 필드 찾기 (패턴 조합)**
+```regex
+private\s+readonly\s+\w+\s+_(\w+);
+```
+결과에서 `Ctrl+Shift+F`로 `_필드명`을 다시 검색하여 사용 빈도 확인
+
+**바꾸기의 고급 기능: 캡처 그룹 활용**
+
+정규식 캡처 그룹을 바꾸기 문자열에서 재사용할 수 있습니다:
+
+**예제: 로깅 패턴 현대화**
+
+```csharp
+// 변경 전:
+_logger.LogInformation("User {0} logged in at {1}", userId, DateTime.Now);
+_logger.LogError("Error {0} occurred in {1}", errorCode, methodName);
+
+// 찾기 패턴:
+LogInformation\("(.+)", (\w+), (\w+)\)
+
+// 바꾸기 패턴:
+LogInformation($"$1", $2, $3)
+
+// 변경 후:
+_logger.LogInformation($"User {userId} logged in at {DateTime.Now}");
+_logger.LogError($"Error {errorCode} occurred in {methodName}");
+```
+
+**$1, $2, $3**는 각각 첫 번째, 두 번째, 세 번째 캡처 그룹을 참조합니다.
+
+**전체 파일 검색의 효율성:**
+
+`Ctrl+Shift+F`는 프로젝트 전체를 검색하며, 다음 옵션을 제공합니다:
+
+- **포함할 파일**: `*.cs`로 C# 파일만 검색
+- **제외할 파일**: `**/bin/**, **/obj/**`로 빌드 결과 제외
+- **파일 이름 검색**: 검색 상자 오른쪽의 "..." 메뉴
+
+**실무 예제: API 사용법 찾기**
+
+특정 NuGet 패키지를 제거하기 전에 사용 위치를 모두 찾아야 할 때:
+
+```
+검색: using Newtonsoft.Json
+포함: src/**/*.cs
+제외: **/bin/**, **/obj/**
+```
+
+결과는 트리 구조로 표시되며, 각 파일의 일치 항목을 클릭하여 즉시 이동할 수 있습니다.
+
+**검색 결과 편집:**
+
+검색 결과 패널에서 `Ctrl+Shift+L`을 누르면 모든 일치 항목에 다중 커서가 생성되어, 검색 없이 일괄 편집이 가능합니다.
+
+**검색 히스토리와 즐겨찾기:**
+
+VS Code는 최근 검색어를 기억합니다. 검색 상자에서 `↓`/`↑`로 히스토리를 탐색할 수 있습니다. 자주 사용하는 검색 패턴은 `.vscode/settings.json`에 저장하여 재사용할 수 있습니다.
 
 ### 들여쓰기 및 포맷팅
 
