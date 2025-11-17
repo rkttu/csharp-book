@@ -309,7 +309,7 @@ catch (Exception ex)
 // 메시지: Input string was not in a correct format.
 // 스택 추적:
 // at System.Int32.Parse(String s)
-// at Program.<Main>$(String[] args) in C:\...\Program.cs:line 3
+// at Program.<Main>$(String[] args) in /home/username/Program.cs:line 3
 ```
 
 ---

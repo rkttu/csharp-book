@@ -1289,7 +1289,7 @@ void PrintDirectory(string path, int depth = 0)
 }
 
 // 사용 예제 (주의: 실제 경로로 테스트)
-// PrintDirectory(@"C:\MyFolder");
+// PrintDirectory("/home/username/MyFolder");
 ```
 
 **꼬리 재귀 최적화 (Tail Call Optimization):**
