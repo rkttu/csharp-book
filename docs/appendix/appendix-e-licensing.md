@@ -156,7 +156,113 @@ brew install podman-desktop
 
 Podman Desktop과 함께 사용할 수 있는 다양한 오픈소스 에디터들도 있으니 필요에 따라 선택하시면 됩니다.
 
-## E.6 라이선스 준수를 위한 체크리스트
+## E.6 기타 C# 개발 도구
+
+C# 개발에 사용할 수 있는 다양한 도구들의 라이선스 정보입니다.
+
+### JetBrains Rider
+
+- **라이선스**: 상용 라이선스
+- **비용**: 유료 구독 (월간/연간)
+- **공식 사이트**: <https://www.jetbrains.com/rider/>
+- **무료 사용 가능한 경우**:
+  - 학생 및 교육 기관: 무료 교육용 라이선스
+  - 오픈소스 프로젝트 개발자: 무료 라이선스 신청 가능
+  - 30일 무료 평가판
+- **특징**: 
+  - 크로스 플랫폼 .NET IDE (Windows, macOS, Linux)
+  - Visual Studio와 유사한 기능의 상용 IDE
+  - 강력한 리팩토링 도구와 코드 분석 기능
+  - Unity 게임 개발 지원
+
+**중요**: 상업적 개발 목적으로 사용 시 유료 구독이 필요합니다.
+
+### ReSharper for Visual Studio
+
+- **라이선스**: 상용 라이선스
+- **비용**: 유료 구독 (월간/연간)
+- **공식 사이트**: <https://www.jetbrains.com/resharper/>
+- **무료 사용 가능한 경우**:
+  - 학생 및 교육 기관: 무료 교육용 라이선스
+  - 오픈소스 프로젝트 개발자: 무료 라이선스 신청 가능
+  - 30일 무료 평가판
+- **특징**: 
+  - Visual Studio용 확장 프로그램
+  - 코드 품질 분석 및 리팩토링 도구
+  - Windows 전용
+
+**중요**: Visual Studio 라이선스와 별도로 ReSharper 라이선스가 필요합니다.
+
+### ReSharper for VS Code Extension
+
+**참고**: 현재 JetBrains에서 공식적으로 제공하는 "ReSharper for VS Code" 제품은 없습니다. VS Code에서는 기본 C# 확장 프로그램 또는 C# Dev Kit을 사용합니다. JetBrains의 .NET 개발 도구가 필요한 경우 Rider IDE를 사용하는 것이 권장됩니다.
+
+### OmniSharp
+
+- **라이선스**: MIT License
+- **비용**: 완전 무료
+- **용도 제한**: 없음
+- **공식 저장소**: <https://github.com/OmniSharp>
+- **특징**:
+  - 오픈소스 .NET 개발 플랫폼
+  - VS Code의 C# 확장 프로그램이 사용하는 언어 서버
+  - 여러 에디터에서 사용 가능 (Vim, Emacs, Sublime Text 등)
+  - 완전히 무료이며 상업적 용도 제한 없음
+
+**권장**: VS Code 사용자는 기본 C# 확장 프로그램을 통해 자동으로 OmniSharp를 사용하게 됩니다.
+
+### Unity Editor
+
+- **라이선스**: Unity Software License
+- **비용 및 제한**:
+  - ✅ **무료 사용 가능한 경우** (Unity Personal):
+    - 개인 개발자
+    - 연 매출 10만 달러 미만인 기업 또는 단체
+    - 교육 및 학습 목적
+  - ❌ **유료 라이선스 필요한 경우**:
+    - 연 매출 10만 달러 이상인 기업: Unity Plus, Pro, Enterprise 구독 필요
+- **공식 사이트**: <https://unity.com/>
+- **특징**:
+  - 게임 엔진 및 통합 개발 환경
+  - C# 스크립팅 지원 (Unity 전용 API)
+  - 크로스 플랫폼 게임 개발
+
+**중요**: Unity에서 C# 개발을 위해서는 Visual Studio Community (Unity와 함께 번들 제공) 또는 Rider를 사용할 수 있습니다. 기업 환경에서 Unity를 사용하는 경우 조직의 매출 규모에 따라 적절한 Unity 라이선스를 확인해야 합니다.
+
+### LINQPad
+
+- **라이선스**: 프리미엄 기능 포함 라이선스
+- **비용**:
+  - ✅ 무료 버전: 기본 기능 사용 가능
+  - 유료 버전 (LINQPad Premium): 추가 기능 제공 (개인 라이선스)
+- **공식 사이트**: <https://www.linqpad.net/>
+- **특징**:
+  - C# 코드 스니펫 실행 및 테스트 도구
+  - LINQ 쿼리 학습 및 테스트에 최적화
+  - 데이터베이스 연결 및 쿼리 실행
+  - Windows 전용
+  - 무료 버전으로도 충분히 학습 및 개발에 활용 가능
+
+**권장**: C# 및 LINQ 학습, 빠른 코드 테스트에 유용합니다. 무료 버전으로도 대부분의 기능 사용 가능합니다.
+
+### 도구 선택 가이드
+
+**완전 무료 도구 (본 책 권장)**:
+- Visual Studio Code + C# 확장
+- OmniSharp (VS Code에 포함)
+- LINQPad (무료 버전)
+
+**학생/교육용**:
+- JetBrains Rider (교육용 무료 라이선스)
+- ReSharper (교육용 무료 라이선스)
+- Unity Personal (학습 목적)
+
+**상업용 개발**:
+- JetBrains Rider (유료 구독)
+- ReSharper (유료 구독, Visual Studio와 함께)
+- Unity Plus/Pro/Enterprise (매출 규모에 따라)
+
+## E.7 라이선스 준수를 위한 체크리스트
 
 개발 환경 구축 시 다음 사항들을 확인하세요:
 
@@ -182,7 +288,7 @@ Podman Desktop과 함께 사용할 수 있는 다양한 오픈소스 에디터�
 - ❌ Docker Desktop 유료 구독 필요 → Podman Desktop 사용 권장
 - ✅ 대안: Podman Desktop 및 기본 C# 확장 사용
 
-## E.7 라이선스 관련 추가 정보
+## E.8 라이선스 관련 추가 정보
 
 ### 공식 라이선스 문서
 
@@ -204,7 +310,7 @@ Podman Desktop과 함께 사용할 수 있는 다양한 오픈소스 에디터�
 3. **문서화**: 사용 중인 도구와 라이선스 목록 관리
 4. **오픈소스 우선**: 가능한 경우 오픈소스 대안 검토
 
-## E.8 본 책의 권장 구성 (무료 & 제약 없음)
+## E.9 본 책의 권장 구성 (무료 & 제약 없음)
 
 이 책에서 소개하는 다음 구성은 **모든 용도에서 완전히 무료**이며 **라이선스 제약이 없습니다**:
 
