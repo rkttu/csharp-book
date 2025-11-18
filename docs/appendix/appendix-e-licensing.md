@@ -217,7 +217,9 @@ C# 개발에 사용할 수 있는 다양한 도구들의 라이선스 정보입�
 
 ### ReSharper for VS Code Extension
 
-**참고**: 현재 JetBrains에서 공식적으로 제공하는 "ReSharper for VS Code" 제품은 없습니다. VS Code에서는 기본 C# 확장 프로그램 또는 C# Dev Kit을 사용합니다. JetBrains의 .NET 개발 도구가 필요한 경우 Rider IDE를 사용하는 것이 권장됩니다.
+- **라이선스**: 상용 라이선스
+- **비용**: 2025년 11월 현재 프리뷰 버전으로 무료 제공, 추후 상용으로 전환 가능성이 있음
+- **공식 사이트**: <https://marketplace.visualstudio.com/items?itemName=jetbrains.resharper-code>
 
 ### OmniSharp
 
@@ -256,7 +258,7 @@ C# 개발에 사용할 수 있는 다양한 도구들의 라이선스 정보입�
 - **라이선스**: 프리미엄 기능 포함 라이선스
 - **비용**:
   - ✅ 무료 버전: 기본 기능 사용 가능
-  - 유료 버전 (LINQPad Premium): 추가 기능 제공 (개인 라이선스)
+  - ⚠️ 유료 버전 (LINQPad Premium): 추가 기능 제공 (개인 라이선스)
 - **공식 사이트**: <https://www.linqpad.net/>
 - **특징**:
   - C# 코드 스니펫 실행 및 테스트 도구
