@@ -575,7 +575,7 @@ dotnet_diagnostic.CS8625.severity = suggestion
 
 ```xml
 <PropertyGroup>
-  <!-- 특정 파일/폴더에서 nullable 경고 억제 -->
+  <!-- 특정 파일/디렉터리에서 nullable 경고 억제 -->
   <NoWarn>$(NoWarn);CS8600;CS8602</NoWarn>
   
   <!-- 또는 특정 경고만 오류로 -->

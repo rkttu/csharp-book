@@ -706,7 +706,7 @@ namespace MyCompany.Models
 
 ### 1. 프로젝트 구조와의 일치
 
-File-scoped 네임스페이스는 폴더 구조와 네임스페이스의 일대일 대응을 강화합니다:
+File-scoped 네임스페이스는 디렉터리 구조와 네임스페이스의 일대일 대응을 강화합니다:
 
 ```
 MyCompany.Product/
