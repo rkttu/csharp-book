@@ -68,7 +68,7 @@ VS Code는 완전한 오픈소스 프로젝트이며 상업적 용도를 포함�
     - 오픈소스 프로젝트 기여자
     - 비영리 조직
     - 5명 이하의 소규모 조직
-  - ❌ **유료 라이선스 필요한 경우**:
+  - ⚠️ **유료 라이선스 필요한 경우**:
     - PC 250대 이상 또는 연 매출 100만 달러 이상의 기업
     - 기업 환경에서 5명 이상이 사용하는 경우
 
@@ -94,7 +94,7 @@ VS Code는 완전한 오픈소스 프로젝트이며 상업적 용도를 포함�
     - 교육 목적
     - 비상업적 오픈소스 프로젝트
     - 직원 250명 미만이고 연 매출 1천만 달러 미만인 소규모 기업
-  - ❌ **유료 구독 필요한 경우**:
+  - ⚠️ **유료 구독 필요한 경우**:
     - 직원 250명 이상 또는 연 매출 1천만 달러 이상의 기업
     - 상업적 용도로 사용하는 중대형 조직
 
@@ -133,24 +133,46 @@ brew install podman-desktop
 
 ### VS Codium
 
+- **홈페이지**: <https://vscodium.com>
 - **라이선스**: MIT License
 - **비용**: 무료
 - **특징**: 완전 오픈소스 빌드, Microsoft 텔레메트리 제거
 
+### Amazon Kiro
+
+- **홈페이지**: <https://kiro.dev>
+- **라이선스**: 상용
+- **비용**: 무료 플랜 제공, 고급 기능은 유료
+
 ### Cursor
 
+- **홈페이지**: <https://cursor.com>
 - **라이선스**: 상용 (프리미엄 기능)
 - **비용**: 무료 플랜 제공, 프리미엄 기능은 유료
 
 ### Windsurf
 
+- **홈페이지**: <https://windsurf.com/editor>
 - **라이선스**: 상용
 - **비용**: 무료 플랜 제공, 고급 기능은 유료
 
 ### Eclipse Theia
 
+- **홈페이지**: <https://theia-ide.org>
 - **라이선스**: Eclipse Public License 2.0
 - **비용**: 무료 (오픈소스)
+
+### coder/code-server
+
+- **홈페이지**: <https://github.com/coder/code-server>
+- **라이선스**: MIT License
+- **비용**: 무료 (오픈소스)
+
+### Google Firebase Studio
+
+- **홈페이지**: <https://firebase.studio>
+- **라이선스**: 상용
+- **비용**: IDE 및 NixOS 내부 환경 사용은 무료, 작업 가능한 워크스페이스 갯수를 늘리려면 결제 필요
 
 ### Podman Desktop에 포함된 에디터들
 
@@ -219,7 +241,7 @@ C# 개발에 사용할 수 있는 다양한 도구들의 라이선스 정보입�
     - 개인 개발자
     - 연 매출 10만 달러 미만인 기업 또는 단체
     - 교육 및 학습 목적
-  - ❌ **유료 라이선스 필요한 경우**:
+  - ⚠️ **유료 라이선스 필요한 경우**:
     - 연 매출 10만 달러 이상인 기업: Unity Plus, Pro, Enterprise 구독 필요
 - **공식 사이트**: <https://unity.com/>
 - **특징**:
@@ -269,24 +291,25 @@ C# 개발에 사용할 수 있는 다양한 도구들의 라이선스 정보입�
 ### 개인 개발자 / 학생 / 오픈소스 기여자
 
 - ✅ 모든 도구를 자유롭게 사용 가능
-- ✅ .NET, VS Code, C# 확장 모두 무료
+- ✅ .NET, VS Code, C# 확장, C# Dev Kit 모두 무료
 - ✅ Visual Studio Community 사용 가능
 - ✅ Docker Desktop 무료 사용 가능
 
 ### 소규모 스타트업 (5명 미만)
 
 - ✅ .NET, VS Code, C# 확장 모두 무료
-- ✅ Visual Studio Community 사용 가능
+- ⚠️ Visual Studio Community: 조직 규모 확인 필요
+  - ⚠️ C# Dev Kit: 조직 규모 확인 필요
 - ⚠️ Docker Desktop: 조직 규모 확인 필요 (250명 미만, 매출 1천만 달러 미만)
-- ✅ 대안: Podman Desktop 사용 권장
+  - ✅ 대안: Podman Desktop 사용 권장
 
 ### 중대형 기업
 
 - ✅ .NET, VS Code, C# 확장 모두 무료
-- ❌ Visual Studio Community 사용 불가 → Professional/Enterprise 구독 필요
-- ❌ C# Dev Kit 사용 시 라이선스 확인 필요
-- ❌ Docker Desktop 유료 구독 필요 → Podman Desktop 사용 권장
-- ✅ 대안: Podman Desktop 및 기본 C# 확장 사용
+- ⚠️ Visual Studio Community 사용 불가 → Professional/Enterprise 구독 필요
+  - ⚠️ C# Dev Kit 사용 시 라이선스 확인 필요
+- ⚠️ Docker Desktop 유료 구독 필요 → Podman Desktop 사용 권장
+  - ✅ 대안: Podman Desktop 및 기본 C# 확장 사용
 
 ## E.8 라이선스 관련 추가 정보
 
