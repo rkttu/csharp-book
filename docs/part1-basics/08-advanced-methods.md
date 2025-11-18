@@ -1267,7 +1267,7 @@ void PrintDirectory(string path, int depth = 0)
         
         // 현재 디렉토리 출력
         string dirName = Path.GetFileName(path);
-        Console.WriteLine($"{indent}[폴더] {dirName}");
+        Console.WriteLine($"{indent}[디렉터리] {dirName}");
         
         // 파일들 출력
         foreach (string file in Directory.GetFiles(path))

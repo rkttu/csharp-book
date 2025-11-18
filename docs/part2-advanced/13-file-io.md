@@ -712,7 +712,7 @@ if (File.Exists(filePath))
 
 ### 13.3.2 Directory 클래스
 
-`Directory` 클래스는 디렉터리(폴더)에 대한 작업을 수행하는 정적 메서드를 제공합니다.
+`Directory` 클래스는 디렉터리에 대한 작업을 수행하는 정적 메서드를 제공합니다.
 
 **디렉터리 존재 확인:**
 
@@ -748,7 +748,7 @@ string dirPath = "temp";
 
 if (Directory.Exists(dirPath))
 {
-    // recursive: true는 하위 파일/폴더도 모두 삭제
+    // recursive: true는 하위 파일/디렉터리도 모두 삭제
     Directory.Delete(dirPath, recursive: true);
     Console.WriteLine("디렉터리가 삭제되었습니다.");
 }
