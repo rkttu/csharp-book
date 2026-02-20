@@ -1670,7 +1670,7 @@ dotnet test
 Title: Fix typo in README.md
 
 Description:
-Changed "recieve" to "receive" in the installation section.
+Changed "receive" to "receive" in the installation section.
 
 Also updated the example code to use the latest API syntax.
 ```
